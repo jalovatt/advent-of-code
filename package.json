@@ -1,0 +1,22 @@
+{
+  "name": "advent-of-code-2021",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Adam Lovatt <jalovatt@hotmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest --verbose",
+    "test:silent": "jest",
+    "lint": "eslint --ext .js .",
+    "day": "bash ./init-day.sh $0"
+  },
+  "dependencies": {
+    "@babel/eslint-parser": "^7.16.3",
+    "@babel/preset-env": "^7.16.4",
+    "babel-jest": "^27.3.1",
+    "eslint": "^8.3.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3",
+    "jest": "^27.3.1"
+  }
+}
