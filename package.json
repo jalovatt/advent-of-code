@@ -11,9 +11,11 @@
     "day": "bash ./init-day.sh $0"
   },
   "dependencies": {
+    "@babel/core": "^7.16.0",
     "@babel/eslint-parser": "^7.16.3",
     "@babel/preset-env": "^7.16.4",
-    "babel-jest": "^27.3.1",
+    "@swc/core": "^1.2.113",
+    "@swc/jest": "^0.2.10",
     "eslint": "^8.3.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.25.3",

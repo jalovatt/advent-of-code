@@ -7,7 +7,6 @@ module.exports = {
     '/__template/',
   ],
   transform: {
-    '^.+\\.js$': '<rootDir>/babel-transform.js',
+    '^.+\\.js$': '@swc/jest',
   },
-
 };
