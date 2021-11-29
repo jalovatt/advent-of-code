@@ -7,7 +7,7 @@
   "scripts": {
     "test": "jest --verbose",
     "test:silent": "jest",
-    "lint": "eslint --ext .js .",
+    "lint": "eslint --ext .js,.ts .",
     "day": "bash ./init-day.sh $0"
   },
   "dependencies": {
@@ -16,9 +16,14 @@
     "@babel/preset-env": "^7.16.4",
     "@swc/core": "^1.2.113",
     "@swc/jest": "^0.2.10",
+    "@tsconfig/recommended": "^1.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
     "eslint": "^8.3.0",
     "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^16.0.0",
     "eslint-plugin-import": "^2.25.3",
-    "jest": "^27.3.1"
+    "jest": "^27.3.1",
+    "typescript": "^4.5.2"
   }
 }

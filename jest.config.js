@@ -1,12 +1,12 @@
 module.exports = {
   testMatch: [
-    '**/?(*.)spec.js',
+    '**/?(*.)spec.(?:t|j)s',
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/__template/',
   ],
   transform: {
-    '^.+\\.js$': '@swc/jest',
+    '^.+\\.(?:t|j)s$': '@swc/jest',
   },
 };
