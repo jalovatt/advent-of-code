@@ -5,11 +5,24 @@ const title = 'No title yet';
 
 const input = loadText('input.txt');
 
+const example = `
+199
+200
+208
+210
+200
+207
+240
+269
+260
+263
+`;
+
 describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        ['199\n200\n208\n210\n200\n207\n240\n269\n260\n263', 7],
+        [example, 7],
       ])('%p => %p', (given, expected) => {
         expect(a(given)).toEqual(expected);
       });
@@ -29,7 +42,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        ['199\n200\n208\n210\n200\n207\n240\n269\n260\n263', 5],
+        [example, 5],
       ])('%p => %p', (given, expected) => {
         expect(b(given)).toEqual(expected);
       });

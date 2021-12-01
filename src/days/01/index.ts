@@ -1,5 +1,7 @@
+import { splitToNumber } from '../../utilities/processing';
+
 export const a = (input: string) => {
-  const arr = input.split('\n').map((n) => parseInt(n, 10));
+  const arr = splitToNumber(input);
 
   let increases = 0;
 
@@ -15,7 +17,7 @@ export const a = (input: string) => {
 };
 
 export const b = (input: string) => {
-  const arr = input.split('\n').map((n) => parseInt(n, 10));
+  const arr = splitToNumber(input);
 
   let increases = 0;
 

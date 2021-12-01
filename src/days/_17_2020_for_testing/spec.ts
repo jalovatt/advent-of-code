@@ -5,11 +5,13 @@ const title = 'Conway Cubes';
 
 const input = loadText('input.txt');
 
-describe(`Day ${__filename.match(/\/([^/]+)\/spec/)[1]} - ${title}`, () => {
+const example = '\n.#.\n..#\n###\n';
+
+describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        ['\n.#.\n..#\n###\n', 112],
+        [example, 112],
       ])('%p => %p', (given, expected) => {
         expect(a(given)).toEqual(expected);
       });
@@ -29,7 +31,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)[1]} - ${title}`, () => {
   describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        ['\n.#.\n..#\n###\n', 848],
+        [example, 848],
       ])('%p => %p', (given, expected) => {
         expect(b(given)).toEqual(expected);
       });

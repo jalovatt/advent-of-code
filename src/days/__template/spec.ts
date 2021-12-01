@@ -5,11 +5,19 @@ const title = 'No title yet';
 
 const input = loadText('input.txt');
 
+const example1 = `
+1
+`;
+
+const example2 = `
+1
+`;
+
 describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        [1, 2],
+        [example1, 2],
       ])('%p => %p', (given, expected) => {
         expect(a(given)).toEqual(expected);
       });
@@ -29,7 +37,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   xdescribe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        [1, 2],
+        [example2, 2],
       ])('%p => %p', (given, expected) => {
         expect(b(given)).toEqual(expected);
       });
