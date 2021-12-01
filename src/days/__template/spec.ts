@@ -5,7 +5,7 @@ const title = 'No title yet';
 
 const input = loadText('input.txt');
 
-describe(`Day ${__filename.match(/\/([^/]+)\/spec/)[1]} - ${title}`, () => {
+describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([

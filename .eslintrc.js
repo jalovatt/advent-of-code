@@ -13,7 +13,7 @@ module.exports = {
     '@typescript-eslint',
   ],
   parserOptions: {
-    project: './tsconfig.json',
+    project: ['./tsconfig.json', './jest.config.js'],
   },
   rules: {
     '@typescript-eslint/lines-between-class-members': [
