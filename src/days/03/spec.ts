@@ -1,5 +1,5 @@
 import loadText from '../../utilities/loadText';
-import { a, b } from '.';
+import { a, b, bBinary } from '.';
 
 const title = 'No title yet';
 
@@ -55,6 +55,26 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
 
       test(`${knownSolution}`, () => {
         const solution = b(input);
+
+        expect(solution).toEqual(knownSolution);
+      });
+    });
+  });
+
+  describe('Part 2 (using binary search)', () => {
+    describe('Tests', () => {
+      test.each([
+        [example1, 230],
+      ])('%p => %p', (given, expected) => {
+        expect(bBinary(given)).toEqual(expected);
+      });
+    });
+
+    describe('Solution', () => {
+      const knownSolution = 4375225;
+
+      test(`${knownSolution}`, () => {
+        const solution = bBinary(input);
 
         expect(solution).toEqual(knownSolution);
       });

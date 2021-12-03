@@ -1,23 +1,29 @@
 import { split } from '../../utilities/processing';
 
-const getCounts = (lines) => {
-  const count = {
+type BinaryChar = '0' | '1';
+type BinaryCounts = {
+  0: number[];
+  1: number[];
+};
+
+const getCounts = (lines: string[]) => {
+  const counts: BinaryCounts = {
     0: new Array(lines[0].length).fill(0),
     1: new Array(lines[0].length).fill(0),
   };
 
   for (let col = 0; col < lines[0].length; col += 1) {
     lines.forEach((line) => {
-      count[line[col]][col] += 1;
-    })
+      counts[line[col] as BinaryChar][col] += 1;
+    });
   }
 
-  return count;
+  return counts;
 };
 
-const compareDigits = (counts) => {
-  const gammaDigits = [];
-  const epsilonDigits = [];
+const compareDigits = (counts: BinaryCounts) => {
+  const gammaDigits: BinaryChar[] = [];
+  const epsilonDigits: BinaryChar[] = [];
   for (let col = 0; col < counts[0].length; col += 1) {
     if (counts[0][col] > counts[1][col]) {
       gammaDigits[col] = '0';
@@ -29,7 +35,7 @@ const compareDigits = (counts) => {
   }
 
   return [gammaDigits, epsilonDigits];
-}
+};
 
 /*
   Gamma = most common digit in each position
@@ -67,6 +73,52 @@ export const b = (input: string) => {
 
   const o2Rating = parseInt(o2.join(''), 2);
   const co2Rating = parseInt(co2.join(''), 2);
+
+  return o2Rating * co2Rating;
+};
+
+/*
+  Given a sorted list of binary strings
+    For each position
+      Determine the least or most common digit
+      Take the subset matching that digit
+      Repeat until only one string is left
+*/
+const binarySearchDigits = (lines: string[], takeMostCommon = false) => {
+  let pos = 0;
+  let min = 0;
+  let max = lines.length - 1;
+
+  while (min < max) {
+    for (let i = min; i <= max; i += 1) {
+      if (lines[i][pos] !== lines[i + 1][pos]) {
+        const mid = i;
+
+        // More 0s and we want the least, or less 0s and we want the most
+        if ((mid - min) >= (max - mid) !== takeMostCommon) {
+          max = mid;
+        } else {
+          min = mid + 1;
+        }
+
+        pos += 1;
+
+        break;
+      }
+    }
+  }
+
+  return min;
+};
+
+export const bBinary = (input: string) => {
+  const lines = split(input).sort();
+
+  const o2min = binarySearchDigits(lines);
+  const co2min = binarySearchDigits(lines, true);
+
+  const o2Rating = parseInt(lines[o2min], 2);
+  const co2Rating = parseInt(lines[co2min], 2);
 
   return o2Rating * co2Rating;
 };
