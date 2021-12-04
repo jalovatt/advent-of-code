@@ -23,5 +23,7 @@ module.exports = {
         exceptAfterSingleLine: true,
       },
     ],
+    // So we can use for...of
+    'no-restricted-syntax': 0,
   },
 };

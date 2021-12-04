@@ -1,7 +1,7 @@
 import loadText from '../../utilities/loadText';
 import { a, b } from '.';
 
-const title = 'No title yet';
+const title = 'Dive!';
 
 const input = loadText('input.txt');
 

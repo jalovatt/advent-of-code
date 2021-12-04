@@ -1,7 +1,7 @@
 import loadText from '../../utilities/loadText';
 import { a, b, bBinary } from '.';
 
-const title = 'No title yet';
+const title = 'Binary Diagnostic';
 
 const input = loadText('input.txt');
 
