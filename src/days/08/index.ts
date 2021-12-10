@@ -20,14 +20,27 @@ b    .  b    .  .    c  b    c  b    c
 
 import { split } from '../../utilities/processing';
 
-const UNIQUE_LENGTHS: { [key: number]: number } = {
+// An object of { [key: K]: V } but it can be created empty with no fuss
+type DynamicRecord<K extends string | number, V> = Partial<{ [key in K]: V }>;
+
+type Value = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type DigitLength = 2 | 3 | 4 | 5 | 6 | 7;
+type Letter = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
+type Digit = Letter[];
+
+type ProcessedEntry = {
+  digits: Digit[],
+  output: string[],
+};
+
+const UNIQUE_LENGTHS: { [key: number]: Value } = {
   2: 1,
   3: 7,
   4: 4,
   7: 8,
 };
 
-const DIGITS_BY_LENGTH = {
+const VALUES_BY_LENGTH: { [key: number]: Value[] } = {
   7: [8],
   6: [0, 6, 9],
   5: [2, 3, 5],
@@ -36,125 +49,108 @@ const DIGITS_BY_LENGTH = {
   2: [1],
 };
 
-type DigitLength = 2 | 3 | 4 | 5 | 6 | 7;
+const contains = (a: Digit, b: Digit) => b.every((char) => a.includes(char));
 
-type Letter = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
+const decodeEntry = ({ digits, output }: ProcessedEntry): number => {
+  const known: {
+    values: DynamicRecord<Value, Digit>,
+    digits: Map<Digit, Value>,
+    count: number,
+  } = { values: {}, digits: new Map(), count: 0 };
 
-const contains = (a: Letter[], b: Letter[]) => b.every((char) => a.includes(char));
-
-const decodeEntry = ({
-  digits,
-  output,
-}: {
-  digits: Letter[][],
-  output: string[],
-}): number => {
-  const knownDigitsByValue: { [key: number]: Letter[] } = {};
-  const knownValuesByDigit: Map<Letter[], number> = new Map();
-  let knownValuesCount = 0;
-
-  const addKnownDigit = (value: number, digit: Letter[]) => {
-    knownDigitsByValue[value] = digit;
-    knownValuesByDigit.set(digit, value);
-    knownValuesCount += 1;
+  const addKnown = (value: Value, digit: Digit) => {
+    known.values[value] = digit;
+    known.digits.set(digit, value);
+    known.count += 1;
   };
 
-  // Grab the easy cases first
-  digits.forEach((digit: Letter[]) => {
-    const valueFromUniqueLength = UNIQUE_LENGTHS[digit.length];
+  // Grab the uniques first
+  digits.forEach((digit) => {
+    const value = UNIQUE_LENGTHS[digit.length];
 
-    if (valueFromUniqueLength) {
-      addKnownDigit(valueFromUniqueLength, digit);
+    if (value) {
+      addKnown(value, digit);
     }
   });
 
-  let times = 0;
+  // Circuit breaker, solution should never need to loop this many times
+  let triesLeft = 10;
 
-  while (times < 10 && knownValuesCount < 10) {
-    digits.forEach((digit: Letter[]) => {
-      if (knownValuesByDigit.has(digit)) { return; }
+  while (triesLeft > 0 && known.count < 10) {
+    digits.forEach((digit) => {
+      if (known.digits.has(digit)) { return undefined; }
 
-      const possible = DIGITS_BY_LENGTH[digit.length as DigitLength]
-        .filter((d) => !knownDigitsByValue[d]);
-
-      // console.dir({ digit, possible });
+      const possible = VALUES_BY_LENGTH[digit.length as DigitLength]
+        .filter((d) => !known.values[d]);
 
       if (possible.length === 1) {
-        addKnownDigit(possible[0], digit);
-        return;
+        return addKnown(possible[0], digit);
       }
 
       if (digit.length === 6) {
-        if ((knownDigitsByValue[5] && contains(digit, knownDigitsByValue[5]))) {
-          if (knownDigitsByValue[1]) {
-            if (contains(digit, knownDigitsByValue[1])) {
-              addKnownDigit(9, digit);
-
-              return;
-            } else {
-              addKnownDigit(6, digit);
-
-              return;
-            }
+        // 9 + 6 are the only l=6 digits that are a superset of 5
+        if ((known.values[5] && contains(digit, known.values[5]))) {
+          // But only 9 is also a superset of 1
+          if (known.values[1]) {
+            return contains(digit, known.values[1])
+              ? addKnown(9, digit)
+              : addKnown(6, digit);
           }
 
-          addKnownDigit(0, digit);
-
-          return;
+          return addKnown(0, digit);
         }
 
-        if ((knownDigitsByValue[7] && !contains(digit, knownDigitsByValue[7]))) {
-          addKnownDigit(6, digit);
-
-          return;
+        // 6 is the only l=6 digit that is not a superset of 7
+        if ((known.values[7] && !contains(digit, known.values[7]))) {
+          return addKnown(6, digit);
         }
       }
 
       if (digit.length === 5) {
-        if (knownDigitsByValue[1] && contains(digit, knownDigitsByValue[1])) {
-          addKnownDigit(3, digit);
-
-          return;
+        // 3 is the only l=5 digit that is a superset of 1
+        if (known.values[1] && contains(digit, known.values[1])) {
+          return addKnown(3, digit);
         }
 
-        if (knownDigitsByValue[6] || knownDigitsByValue[9]) {
-          if (contains(knownDigitsByValue[6] || knownDigitsByValue[9], digit)) {
-            addKnownDigit(5, digit);
-
-            return;
-          } else {
-            addKnownDigit(2, digit);
-
-            return;
-          }
+        // 5 is a subset of both 9 and 6; 2 is neither
+        const knownSuper = known.values[6] || known.values[5];
+        if (knownSuper) {
+          return contains(knownSuper as Digit, digit)
+            ? addKnown(5, digit)
+            : addKnown(2, digit);
         }
       }
+
+      return undefined;
     });
 
-    times += 1;
+    triesLeft -= 1;
   }
 
   const valuesByString: { [key: string]: number } = {};
-  knownValuesByDigit.forEach((value, digit) => { valuesByString[digit.join('')] = value; });
+  known.digits.forEach((value, digit) => { valuesByString[digit.join('')] = value; });
 
-  const mappedOutput = output.map((digit) => valuesByString[digit]);
+  const decoded = output.map((digit) => valuesByString[digit]).join('');
 
-  // console.dir({ valuesByString, output, mappedOutput });
-  return parseInt(mappedOutput.join(''), 10);
+  return parseInt(decoded, 10);
 };
+
+const normalizeEntry = (entry: string): { digits: string[], output: string[] } => {
+  const match = entry.match(/([^|]+) \| (.+)/) as string[];
+  const [, rawDigits, rawOutput] = match;
+
+  return {
+    digits: rawDigits.split(' ').map((str) => str.split('').sort().join('')),
+    output: rawOutput.split(' ').map((str) => str.split('').sort().join('')),
+  };
+};
+
+const dedupeArray = <T>(arr: T[]): T[] => Array.from(new Set(arr));
 
 export const a = (input: string) => {
   const rawEntries = split(input);
 
-  const entries = rawEntries.map((entry) => {
-    const match = entry.match(/([^|]+) \| (.+)/) as string[];
-    const [, rawDigits, rawOutput] = match;
-
-    return {
-      digits: rawDigits.split(' ').map((str) => str.split('').sort().join('')),
-      output: rawOutput.split(' ').map((str) => str.split('').sort().join('')),
-    };
-  });
+  const entries = rawEntries.map(normalizeEntry);
 
   let uniqueOutputDigits = 0;
 
@@ -173,15 +169,12 @@ export const b = (input: string) => {
   const rawEntries = split(input);
 
   const entries = rawEntries.map((entry) => {
-    const match = entry.match(/([^|]+) \| (.+)/) as string[];
-    const [, rawDigits, rawOutput] = match;
+    const normalized = normalizeEntry(entry);
+    const digits = dedupeArray([...normalized.digits, ...normalized.output]);
 
-    const sortedDigits = rawDigits.split(' ').map((str) => str.split('').sort().join(''));
-    const sortedOutput = rawOutput.split(' ').map((str) => str.split('').sort().join(''));
-
-    const obj: { digits: Letter[][], output: string[] } = {
-      digits: Array.from(new Set([...sortedDigits, ...sortedOutput])).map((digits) => digits.split('')) as Letter[][],
-      output: sortedOutput,
+    const obj: ProcessedEntry = {
+      digits: digits.map((digit) => digit.split('')) as Digit[],
+      output: normalized.output,
     };
 
     return decodeEntry(obj);
