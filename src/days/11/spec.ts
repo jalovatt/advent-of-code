@@ -28,7 +28,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
       });
     });
 
-    xdescribe('Solution', () => {
+    describe('Solution', () => {
       const knownSolution = 1719;
 
       test(`${knownSolution}`, () => {
