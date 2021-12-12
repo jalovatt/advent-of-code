@@ -59,14 +59,12 @@ const getNodes = (entries: string[][]): [Node, Node] => {
 class NodeVisitor {
   node: Node;
   visitedCount: Map<Node, number>;
-  visitedString: string;
   hasExtraVisit: boolean;
 
-  constructor(node: Node, visitedCount: Map<Node, number>, visitedString = '', hasExtraVisit = false) {
+  constructor(node: Node, visitedCount: Map<Node, number>, hasExtraVisit = false) {
     this.node = node;
     this.visitedCount = new Map(visitedCount);
     this.visitedCount.set(node, (this.visitedCount.get(node) || 0) + 1);
-    this.visitedString = `${visitedString},${node.value}`;
     this.hasExtraVisit = hasExtraVisit;
   }
 
@@ -89,9 +87,9 @@ class NodeVisitor {
 }
 
 const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): number => {
-  const toVisit = [new NodeVisitor(start, new Map(), '', allowExtraVisit)];
+  const toVisit = [new NodeVisitor(start, new Map(), allowExtraVisit)];
 
-  const paths: string[] = [];
+  let pathsCount = 0;
 
   // Circuit breaker
   let times = 500000;
@@ -104,10 +102,10 @@ const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): num
     for (let i = 0; i < next.length; i += 1) {
       const choice = next[i];
       if (choice.edge === end) {
-        paths.push(cur.visitedString);
+        pathsCount += 1;
       } else if (choice.edge !== start) {
         toVisit.push(
-          new NodeVisitor(choice.edge, cur.visitedCount, cur.visitedString, choice.hasExtraVisit),
+          new NodeVisitor(choice.edge, cur.visitedCount, choice.hasExtraVisit),
         );
       }
     }
@@ -116,10 +114,10 @@ const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): num
   }
 
   if (!times) {
-    throw new Error(`Hit circuit breaker, paths = ${paths.length}, visitors left = ${toVisit.length}`);
+    throw new Error(`Hit circuit breaker, paths = ${pathsCount}, visitors left = ${toVisit.length}`);
   }
 
-  return paths.length;
+  return pathsCount;
 };
 
 export const a = (input: string) => {
