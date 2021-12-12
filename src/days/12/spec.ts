@@ -84,7 +84,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
     });
 
     describe('Solution', () => {
-      const knownSolution = null;
+      const knownSolution = 152837;
 
       test(`${knownSolution}`, () => {
         const solution = b(input);

@@ -4,60 +4,28 @@ import { split } from '../../utilities/processing';
 class Node {
   value: string;
   isLarge: boolean;
-  edges: Set<Node>;
+  edges: Array<Node>;
 
   constructor(value: string) {
     this.value = value;
     this.isLarge = (value.toUpperCase() === value);
-    this.edges = new Set();
+    this.edges = [];
   }
 
   connect(node: Node) {
-    this.edges.add(node);
-    node.edges.add(this);
-  }
-}
-
-class Visitor {
-  current: Node;
-  visitedCount: Map<Node, number>;
-  visited: string;
-  hasExtraVisit: boolean;
-
-  constructor(current: Node, visitedCount: Map<Node, number>, visited = '', hasExtraVisit = false) {
-    this.current = current;
-    this.visitedCount = new Map(Array.from(visitedCount));
-    this.visitedCount.set(current, (this.visitedCount.get(current) || 0) + 1);
-    this.visited = `${visited},${current.value}`;
-    this.hasExtraVisit = hasExtraVisit;
-  }
-
-  move(): [[Node, boolean][], Map<Node, number>, string] {
-    const out: [Node, boolean][] = [];
-
-    this.current.edges.forEach((edge) => {
-      const visitedTimes = this.visitedCount.get(edge);
-
-      if (edge.isLarge || !visitedTimes) {
-        out.push([edge, this.hasExtraVisit])
-      } else if (visitedTimes === 1 && this.hasExtraVisit) {
-        out.push([edge, false]);
-      }
-    });
-
-    return [out, this.visitedCount, this.visited];
+    this.edges.push(node);
+    node.edges.push(this);
   }
 }
 
 const getObjWithDefaultNode = (): { [key: string]: Node } => (
   new Proxy({} as { [key: string]: Node }, {
-    get: (t, p) => { if (!t[p]) { t[p] = new Node(p); } return t[p]; },
+    // eslint-disable-next-line no-param-reassign
+    get: (t, p: string) => { if (!t[p]) { t[p] = new Node(p); } return t[p]; },
   })
 );
 
-export const a = (input: string) => {
-  const entries = split(input).map((line) => line.split('-'));
-
+const getNodes = (entries: string[][]): [Node, Node] => {
   const nodesByString = getObjWithDefaultNode();
 
   let start: Node;
@@ -85,96 +53,85 @@ export const a = (input: string) => {
     }
   });
 
-  const visitors = [new Visitor(start!, new Map())];
-
-  let paths = 0;
-
-  // Circuit breaker
-  let times = 20000;
-
-  while (visitors.length && times > 0) {
-    const cur = visitors.pop()!;
-
-    const [next, visitedCount] = cur.move();
-
-    // eslint-disable-next-line @typescript-eslint/no-loop-func
-    next.forEach(([node]) => {
-      if (node === end) {
-        paths += 1;
-      } else {
-        visitors.push(new Visitor(node, visitedCount));
-      }
-    });
-
-    times -= 1;
-  }
-
-  if (!times) {
-    throw new Error(`Hit circuit breaker, paths = ${paths}, visitors left = ${visitors.length}`);
-  }
-
-  return paths;
+  return [start!, end!];
 };
 
-export const b = (input: string) => {
-  const entries = split(input).map((line) => line.split('-'));
+class NodeVisitor {
+  node: Node;
+  visitedCount: Map<Node, number>;
+  visitedString: string;
+  hasExtraVisit: boolean;
 
-  const nodesByString = getObjWithDefaultNode();
+  constructor(node: Node, visitedCount: Map<Node, number>, visitedString = '', hasExtraVisit = false) {
+    this.node = node;
+    this.visitedCount = new Map(visitedCount);
+    this.visitedCount.set(node, (this.visitedCount.get(node) || 0) + 1);
+    this.visitedString = `${visitedString},${node.value}`;
+    this.hasExtraVisit = hasExtraVisit;
+  }
 
-  let start: Node;
-  let end: Node;
+  visit(): { edge: Node, hasExtraVisit: boolean }[] {
+    const out = [];
 
-  entries.forEach(([left, right]) => {
-    const leftNode = nodesByString[left];
-    const rightNode = nodesByString[right];
-    leftNode.connect(rightNode);
+    for (let i = 0; i < this.node.edges.length; i += 1) {
+      const edge = this.node.edges[i];
+      const visitedTimes = this.visitedCount.get(edge);
 
-    if (!start) {
-      if (left === 'start') {
-        start = leftNode;
-      } else if (right === 'start') {
-        start = rightNode;
+      if (edge.isLarge || !visitedTimes) {
+        out.push({ edge, hasExtraVisit: this.hasExtraVisit });
+      } else if (visitedTimes === 1 && this.hasExtraVisit) {
+        out.push({ edge, hasExtraVisit: false });
       }
     }
 
-    if (!end) {
-      if (left === 'end') {
-        end = leftNode;
-      } else if (right === 'end') {
-        end = rightNode;
-      }
-    }
-  });
+    return out;
+  }
+}
 
-  const visitors = [new Visitor(start!, new Map(), '', true)];
+const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): number => {
+  const toVisit = [new NodeVisitor(start, new Map(), '', allowExtraVisit)];
 
   const paths: string[] = [];
 
   // Circuit breaker
   let times = 500000;
 
-  while (visitors.length && times > 0) {
-    const cur = visitors.pop()!;
+  while (toVisit.length && times > 0) {
+    const cur = toVisit.pop()!;
 
-    const [next, visitedCount, visited] = cur.move();
+    const next = cur.visit();
 
-    // eslint-disable-next-line @typescript-eslint/no-loop-func
-    next.forEach(([node, hasExtraVisit]) => {
-      if (node === end) {
-        paths.push(visited);
-      } else if (node !== start) {
-        visitors.push(new Visitor(node, visitedCount, visited, hasExtraVisit));
+    for (let i = 0; i < next.length; i += 1) {
+      const choice = next[i];
+      if (choice.edge === end) {
+        paths.push(cur.visitedString);
+      } else if (choice.edge !== start) {
+        toVisit.push(
+          new NodeVisitor(choice.edge, cur.visitedCount, cur.visitedString, choice.hasExtraVisit),
+        );
       }
-    });
+    }
 
     times -= 1;
   }
 
   if (!times) {
-    throw new Error(`Hit circuit breaker, paths = ${paths.length}, visitors left = ${visitors.length}`);
+    throw new Error(`Hit circuit breaker, paths = ${paths.length}, visitors left = ${toVisit.length}`);
   }
 
-  // console.dir(paths);
-
   return paths.length;
+};
+
+export const a = (input: string) => {
+  const entries = split(input).map((line) => line.split('-'));
+  const [start, end] = getNodes(entries);
+
+  return findDistinctPaths(start, end);
+};
+
+export const b = (input: string) => {
+  const entries = split(input).map((line) => line.split('-'));
+  const [start, end] = getNodes(entries);
+
+  return findDistinctPaths(start, end, true);
 };
