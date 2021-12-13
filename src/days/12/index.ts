@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { split } from '../../utilities/processing';
+import circuitBreaker from '../../utilities/circuitBreaker';
 
 class Node {
   value: string;
@@ -91,10 +92,7 @@ const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): num
 
   let pathsCount = 0;
 
-  // Circuit breaker
-  let times = 500000;
-
-  while (toVisit.length && times > 0) {
+  while (toVisit.length) {
     const cur = toVisit.pop()!;
 
     const next = cur.visit();
@@ -110,11 +108,7 @@ const findDistinctPaths = (start: Node, end: Node, allowExtraVisit = false): num
       }
     }
 
-    times -= 1;
-  }
-
-  if (!times) {
-    throw new Error(`Hit circuit breaker, paths = ${pathsCount}, visitors left = ${toVisit.length}`);
+    circuitBreaker(500000);
   }
 
   return pathsCount;
