@@ -1,3 +1,4 @@
+import { MinPriorityQueue, PriorityQueueItem } from '@datastructures-js/priority-queue';
 import circuitBreaker from '../../utilities/circuitBreaker';
 import { split, splitToNumber } from '../../utilities/processing';
 
@@ -23,13 +24,16 @@ class Node {
 
 const wrapValue = (n: number) => ((n - 1) % 9) + 1;
 
-const tileField = (field: Field, tiles: number) => {
-  const out = new Array(field.length * tiles).fill(null)
-    .map(() => new Array(field[0].length * tiles));
+const tileField = (field: number[][], tiles: number) => {
+  const width = field.length * tiles;
+  const height = field[0].length * tiles;
+  const out = new Array(width);
 
   for (let y = 0; y < out.length; y += 1) {
     const fy = y % field.length;
     const ty = Math.trunc(y / field.length);
+
+    out[y] = new Array(height);
 
     for (let x = 0; x < out[0].length; x += 1) {
       const fx = x % field[0].length;
@@ -42,38 +46,42 @@ const tileField = (field: Field, tiles: number) => {
   return out;
 };
 
-const buildGraph = (field: Field): [Node, Node] => {
-  const graph = new Array(field.length).fill(null).map(() => new Array(field[0].length));
+const buildGraph = (field: (Node | number)[][]): [Node, Node] => {
+  // const graph = new Array(field.length).fill(null).map(() => new Array(field[0].length));
 
   for (let y = 0; y < field.length; y += 1) {
     for (let x = 0; x < field[0].length; x += 1) {
-      let node: Node = graph[y][x];
-      if (!node) {
-        node = new Node([y, x], field[y][x]);
-        graph[y][x] = node;
+      let v: Node | number = field[y][x];
+      if (typeof v === 'number') {
+        v = new Node([y, x], v);
+        // eslint-disable-next-line no-param-reassign
+        field[y][x] = v;
       }
 
-      let nodeRight = graph[y][x + 1];
-      if (!nodeRight && field[y][x + 1] !== undefined) {
-        nodeRight = new Node([y, x + 1], field[y][x + 1]);
-        graph[y][x + 1] = nodeRight;
+      let vRight = field[y][x + 1];
+      if (typeof vRight === 'number') {
+        vRight = new Node([y, x + 1], vRight);
+        // eslint-disable-next-line no-param-reassign
+        field[y][x + 1] = vRight;
       }
 
-      let nodeDown = graph[y + 1]?.[x];
-      if (!nodeDown && field[y + 1] !== undefined) {
-        nodeDown = new Node([y + 1, x], field[y + 1][x]);
-        graph[y + 1][x] = nodeDown;
+      let vDown = field[y + 1]?.[x];
+      if (typeof vDown === 'number') {
+        vDown = new Node([y + 1, x], vDown);
+        // eslint-disable-next-line no-param-reassign
+        field[y + 1][x] = vDown;
       }
 
-      if (nodeRight) { node.connect(nodeRight); }
-      if (nodeDown) { node.connect(nodeDown); }
+      if (vRight) { v.connect(vRight); }
+      if (vDown) { v.connect(vDown); }
     }
   }
 
-  return [graph[0][0], graph[graph.length - 1][graph[0].length - 1]];
+  return [field[0][0] as Node, field[field.length - 1][field[0].length - 1] as Node];
 };
 
 const printField = (field: (string | number)[][]) => {
+  // eslint-disable-next-line no-console
   console.log(field.map((row) => row.join('')).join('\n'));
 };
 
@@ -104,22 +112,8 @@ const printCosts = (end: Node, prev: Map<Node, Node>, cost: Map<Node, number>) =
 
   costs.reverse();
 
+  // eslint-disable-next-line no-console
   console.log(costs.join('\n'));
-};
-
-const spliceNext = (toCheck: Node[], cost: Map<Node, number>): Node => {
-  let minCost = Number.MAX_SAFE_INTEGER;
-  let minIndex = -1;
-
-  for (let i = toCheck.length - 1; i > -1; i -= 1) {
-    const cur = toCheck[i];
-    const v = cost.get(cur)!;
-    if (v < minCost) {
-      minCost = v;
-      minIndex = i;
-    }
-  }
-  return toCheck.splice(minIndex, 1)[0];
 };
 
 /*
@@ -128,41 +122,51 @@ const spliceNext = (toCheck: Node[], cost: Map<Node, number>): Node => {
   and a few other places.
 */
 const run = (input: string, tiles = 1) => {
-  console.time('building field');
+  // console.time('building field');
   const field: Field = split(input, '\n').map((row) => splitToNumber(row, ''));
   const [start, end] = buildGraph(tileField(field, tiles));
-  console.timeEnd('building field');
+  // console.timeEnd('building field');
 
-  console.time('searching');
-
+  // console.time('searching');
   const cost: Map<Node, number> = new Map();
+  const visited: Set<Node> = new Set();
   const prev: Map<Node, Node> = new Map();
+  visited.add(start);
   cost.set(start, 0);
 
-  const toCheck: Node[] = [start];
+  const toCheck = new MinPriorityQueue({
+    priority: (n: Node) => cost.get(n)!,
+  });
 
-  while (toCheck.length) {
-    const cur = spliceNext(toCheck, cost);
+  toCheck.enqueue(start);
+
+  while (toCheck.size()) {
+    const cur = (toCheck.dequeue() as PriorityQueueItem<Node>).element;
     const curCost = cost.get(cur)!;
 
     for (let i = 0; i < cur.edges.length; i += 1) {
       const neighbour = cur.edges[i];
       const neighbourCost = cost.get(neighbour) ?? Number.MAX_SAFE_INTEGER;
 
-      if (neighbour !== end && cost.get(neighbour) === undefined) {
-        toCheck.push(neighbour);
-      }
-
       if (curCost + neighbour.value < neighbourCost) {
         cost.set(neighbour, curCost + neighbour.value);
         prev.set(neighbour, cur);
       }
+
+      if (neighbour === end) { break; }
+
+      if (!visited.has(neighbour)) {
+        visited.add(neighbour);
+        toCheck.enqueue(neighbour);
+      }
     }
 
-    circuitBreaker(1000000);
+    circuitBreaker(1000000, () => {
+      // eslint-disable-next-line no-console
+      console.dir({ size: toCheck.size() });
+    });
   }
-
-  console.timeEnd('searching');
+  // console.timeEnd('searching');
 
   const finalCost = cost.get(end)!;
 
