@@ -1,3 +1,5 @@
+const noop = () => {};
+
 let n = 0;
 
 beforeEach(() => {
@@ -16,9 +18,10 @@ beforeEach(() => {
  * }
  * ```
 */
-export default (limit: number) => {
+export default (limit: number, onFail: () => void = noop) => {
   n += 1;
   if (n === limit) {
+    onFail();
     throw new Error(`Tripped circuit breaker: ${limit}`);
   }
 };
