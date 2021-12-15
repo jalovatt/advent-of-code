@@ -1,5 +1,6 @@
 import { MinPriorityQueue, PriorityQueueItem } from '@datastructures-js/priority-queue';
 import circuitBreaker from '../../utilities/circuitBreaker';
+import { log, time, counter } from '../../utilities/logging';
 import { split, splitToNumber } from '../../utilities/processing';
 
 type Coord = [number, number];
@@ -81,8 +82,7 @@ const buildGraph = (field: (Node | number)[][]): [Node, Node] => {
 };
 
 const printField = (field: (string | number)[][]) => {
-  // eslint-disable-next-line no-console
-  console.log(field.map((row) => row.join('')).join('\n'));
+  log(field.map((row) => row.join('')).join('\n'));
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -112,8 +112,7 @@ const printCosts = (end: Node, prev: Map<Node, Node>, cost: Map<Node, number>) =
 
   costs.reverse();
 
-  // eslint-disable-next-line no-console
-  console.log(costs.join('\n'));
+  log(costs.join('\n'));
 };
 
 /*
@@ -122,12 +121,20 @@ const printCosts = (end: Node, prev: Map<Node, Node>, cost: Map<Node, number>) =
   and a few other places.
 */
 const run = (input: string, tiles = 1) => {
-  // console.time('building field');
+  log();
+  time('initial field');
   const field: Field = split(input, '\n').map((row) => splitToNumber(row, ''));
-  const [start, end] = buildGraph(tileField(field, tiles));
-  // console.timeEnd('building field');
+  time('initial field', true);
 
-  // console.time('searching');
+  time('tiledField');
+  const tiledField = tileField(field, tiles);
+  time('tiledField', true);
+
+  time('buildGraph');
+  const [start, end] = buildGraph(tiledField);
+  time('buildGraph', true);
+
+  time('searching');
   const cost: Map<Node, number> = new Map();
   const visited: Set<Node> = new Set();
   const prev: Map<Node, Node> = new Map();
@@ -141,6 +148,7 @@ const run = (input: string, tiles = 1) => {
   toCheck.enqueue(start);
 
   while (toCheck.size()) {
+    counter('nodes checked');
     const cur = (toCheck.dequeue() as PriorityQueueItem<Node>).element;
     const curCost = cost.get(cur)!;
 
@@ -161,12 +169,10 @@ const run = (input: string, tiles = 1) => {
       }
     }
 
-    circuitBreaker(1000000, () => {
-      // eslint-disable-next-line no-console
-      console.dir({ size: toCheck.size() });
-    });
+    circuitBreaker(1000000);
   }
-  // console.timeEnd('searching');
+  time('searching', true);
+  counter('nodes checked', true);
 
   const finalCost = cost.get(end)!;
 
