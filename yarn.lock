@@ -1271,22 +1271,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datastructures-js/heap@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "@datastructures-js/heap@npm:3.2.0"
-  checksum: 682a618826e19fa8adfcdc00f519c01190bfa0163f8457f041353f9137309ab6992af2d4c2118b8b479060f790b3761768d23ecc176cd6fe58c7dab8f8eafd0e
-  languageName: node
-  linkType: hard
-
-"@datastructures-js/priority-queue@npm:^5.3.0":
-  version: 5.3.0
-  resolution: "@datastructures-js/priority-queue@npm:5.3.0"
-  dependencies:
-    "@datastructures-js/heap": ^3.2.0
-  checksum: 89dbbc2e8d39ce4ba0be70b9a49290e2eb1bd5ae5a599d0e546840aba9726abf69fdd6c906760b331c49ec594a1e1cc44a4b3b3b19e071fc48fca5946f8ccae3
-  languageName: node
-  linkType: hard
-
 "@eslint/eslintrc@npm:^1.0.4":
   version: 1.0.4
   resolution: "@eslint/eslintrc@npm:1.0.4"
@@ -2109,7 +2093,6 @@ __metadata:
     "@babel/core": ^7.16.0
     "@babel/eslint-parser": ^7.16.3
     "@babel/preset-env": ^7.16.4
-    "@datastructures-js/priority-queue": ^5.3.0
     "@swc/core": ^1.2.113
     "@swc/jest": ^0.2.10
     "@tsconfig/recommended": ^1.0.1

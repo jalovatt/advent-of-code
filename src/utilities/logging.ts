@@ -1,10 +1,15 @@
 import { performance } from 'perf_hooks';
+import util from 'util';
 
 export const log = (...args: any) => {
   if (args.length) {
-    process.stdout.write(args.length === 1 ? args[0] : args);
+    process.stdout.write(`${args.length === 1 ? args[0] : args}`);
   }
   process.stdout.write('\n');
+};
+
+export const dir = (obj: any, options = {}) => {
+  process.stdout.write(`${util.inspect(obj, options)}\n`);
 };
 
 const timers: Record<string, number> = {};

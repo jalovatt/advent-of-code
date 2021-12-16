@@ -25,12 +25,12 @@ const example2 = `
 `;
 
 const example3 = `
-19999999
-19911111
-19919991
-19911991
-19991991
-11111991
+199999999999999
+199111111111111
+199199999999991
+199119999999991
+199919999999991
+111119999999991
 `;
 
 describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
@@ -39,7 +39,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
       test.each([
         [example1, 40],
         [example2, 8],
-        [example3, 22],
+        [example3, 29],
       ])('%p => %p', (given, expected) => {
         expect(a(given)).toEqual(expected);
       });

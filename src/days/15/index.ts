@@ -1,7 +1,8 @@
-import { MinPriorityQueue, PriorityQueueItem } from '@datastructures-js/priority-queue';
+/* eslint-disable no-labels */
 import circuitBreaker from '../../utilities/circuitBreaker';
-import { log, time, counter } from '../../utilities/logging';
+import { log } from '../../utilities/logging';
 import { split, splitToNumber } from '../../utilities/processing';
+import { BucketQueue } from './BucketQueue';
 
 type Coord = [number, number];
 type Field = number[][];
@@ -121,47 +122,49 @@ const printCosts = (end: Node, prev: Map<Node, Node>, cost: Map<Node, number>) =
   and a few other places.
 */
 const run = (input: string, tiles = 1) => {
-  log();
-  time('initial field');
+  // log();
+  // time('initial field');
   const field: Field = split(input, '\n').map((row) => splitToNumber(row, ''));
-  time('initial field', true);
+  // time('initial field', true);
 
-  time('tiledField');
+  // time('tiledField');
   const tiledField = tileField(field, tiles);
-  time('tiledField', true);
+  // time('tiledField', true);
 
-  time('buildGraph');
+  // time('buildGraph');
   const [start, end] = buildGraph(tiledField);
-  time('buildGraph', true);
+  // time('buildGraph', true);
 
-  time('searching');
+  // time('searching');
   const cost: Map<Node, number> = new Map();
   const visited: Set<Node> = new Set();
   const prev: Map<Node, Node> = new Map();
   visited.add(start);
   cost.set(start, 0);
 
-  const toCheck = new MinPriorityQueue({
-    priority: (n: Node) => cost.get(n)!,
-  });
+  const toCheck: BucketQueue<Node> = new BucketQueue(
+    9 * tiledField.length * tiledField[0].length,
+    (node) => cost.get(node)!,
+  );
 
   toCheck.enqueue(start);
 
-  while (toCheck.size()) {
-    counter('nodes checked');
-    const cur = (toCheck.dequeue() as PriorityQueueItem<Node>).element;
+  mainLoop:
+  while (toCheck.size) {
+    const cur = toCheck.dequeue();
     const curCost = cost.get(cur)!;
 
     for (let i = 0; i < cur.edges.length; i += 1) {
       const neighbour = cur.edges[i];
-      const neighbourCost = cost.get(neighbour) ?? Number.MAX_SAFE_INTEGER;
+      const existingNeighbourCost = cost.get(neighbour) ?? Number.MAX_SAFE_INTEGER;
+      const currentNeighbourCost = curCost + neighbour.value;
 
-      if (curCost + neighbour.value < neighbourCost) {
-        cost.set(neighbour, curCost + neighbour.value);
+      if (currentNeighbourCost < existingNeighbourCost) {
+        cost.set(neighbour, currentNeighbourCost);
         prev.set(neighbour, cur);
       }
 
-      if (neighbour === end) { break; }
+      if (neighbour === end) { break mainLoop; }
 
       if (!visited.has(neighbour)) {
         visited.add(neighbour);
@@ -171,16 +174,13 @@ const run = (input: string, tiles = 1) => {
 
     circuitBreaker(1000000);
   }
-  time('searching', true);
-  counter('nodes checked', true);
+  // time('searching', true);
 
   const finalCost = cost.get(end)!;
 
   if (!finalCost) {
     throw new Error('Never reached the end');
   }
-
-  // console.log({ finalCost, startCost: cost.get(start) });
 
   // printPath(end, prev, field);
   // printCosts(end, prev, cost);
