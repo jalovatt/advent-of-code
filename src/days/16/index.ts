@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import { dir, log } from '../../utilities/logging';
 
 const packetTypes: Record<number, { name: string, resolver: (values: number[]) => number }> = {
@@ -53,6 +52,7 @@ class Packet {
   content: string;
 
   value?: number;
+  versionSum?: number;
 
   input: string;
   processedInput: string;
@@ -136,6 +136,8 @@ class Packet {
       this.children.push(child);
     }
 
+    this.value = this.resolveValue();
+    this.versionSum = this.resolveVersionSum();
     this.remaining = remaining;
   }
 
@@ -150,7 +152,8 @@ class Packet {
   }
 
   resolveVersionSum(): number {
-    return this.version + this.children.reduce((acc, cur) => acc + cur.resolveVersionSum(), 0);
+    return this.version
+      + this.children.reduce((acc, cur) => acc + (cur.versionSum || cur.version), 0);
   }
 
   describe(): any {
@@ -215,12 +218,14 @@ export const testParsing = (input: string) => {
 export const a = (input: string) => {
   const root = new Packet(input);
   // root.print();
-  return root.resolveVersionSum();
+  return root.versionSum;
 };
 
 export const b = (input: string) => {
   const root = new Packet(input);
   // root.print();
   // root.printOperations();
-  return root.resolveValue();
+  const result = root.value;
+
+  return result;
 };

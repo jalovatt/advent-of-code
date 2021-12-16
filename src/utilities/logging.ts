@@ -16,7 +16,7 @@ const timers: Record<string, number> = {};
 export const time = (label: string, stop = false) => {
   const t = performance.now();
   if (timers[label]) {
-    const diff = Math.trunc(t - timers[label]);
+    const diff = Math.trunc((t - timers[label]) * 10) / 10;
     log(`timer - ${label}: ${diff}ms`);
 
     if (stop) {
