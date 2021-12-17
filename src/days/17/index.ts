@@ -11,11 +11,16 @@ class Probe {
   bounds: TargetBounds;
   vx: number;
   vy: number;
+  ovx: number;
+  ovy: number;
   x: number;
   y: number;
   yMax: number;
 
   constructor(vx: number, vy: number, bounds: TargetBounds) {
+    this.ovx = vx;
+    this.ovy = vy;
+
     this.x = 0;
     this.y = 0;
     this.yMax = 0;
@@ -58,6 +63,28 @@ class Probe {
   }
 }
 
+const triangularNumbersCache: Record<number, number> = {};
+const nthTriangularNumber = (n) => {
+  if (!triangularNumbersCache[n]) {
+    triangularNumbersCache[n] = (n * (n + 1)) / 2;
+  }
+
+  return triangularNumbersCache[n];
+};
+
+// TODO: Wrong
+const trianglesBetweenBounds = (nMin: number, triangleMax: number): number[] => {
+  const valid = [];
+  let cur = nMin;
+  while (nthTriangularNumber(cur) - cur <= triangleMax) {
+    valid.push(cur);
+
+    cur += 1;
+  }
+
+  return valid;
+};
+
 const findSolutions = (input: string): Probe[] => {
   const match: number[] = input.match(/([-1234567890]+)/g)!.map((n) => parseInt(n, 10))!;
   const bounds = {
@@ -68,7 +95,6 @@ const findSolutions = (input: string): Probe[] => {
   };
 
   /*
-    // TODO: This is somehow wrong
     Any starting vx less than this will never get us there
 
     vxMin = The lowest number s.t. n + n-1 + n-2... + 1 >= xMin
@@ -119,6 +145,9 @@ const findSolutions = (input: string): Probe[] => {
   //     n <=
   // */
 
+  const vxValid = trianglesBetweenBounds(vxMin, bounds.xMax);
+  log(`got ${vxValid} valid vx values`);
+
   const solutions = [];
 
   dir({ bounds, vxMin, vxMax });
@@ -133,6 +162,9 @@ const findSolutions = (input: string): Probe[] => {
       }
     }
   }
+
+  // log(`hit ${solutions.length} of ${count} tries`);
+  // dir(new Set(solutions.map((p) => p.ovx)));
 
   return solutions;
 }
