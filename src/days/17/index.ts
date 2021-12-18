@@ -1,4 +1,4 @@
-import { dir, log } from '../../utilities/logging';
+import { log } from '../../utilities/logging';
 
 type TargetBounds = {
   xMin: number
@@ -7,64 +7,23 @@ type TargetBounds = {
   yMax: number,
 };
 
-class Probe {
-  bounds: TargetBounds;
-  vx: number;
-  vy: number;
-  ovx: number;
-  ovy: number;
-  x: number;
-  y: number;
-  yMax: number;
+type ShotResult = { vx: number, vy: number, yMax: number };
 
-  constructor(vx: number, vy: number, bounds: TargetBounds) {
-    this.ovx = vx;
-    this.ovy = vy;
-
-    this.x = 0;
-    this.y = 0;
-    this.yMax = 0;
-    this.vx = vx;
-    this.vy = vy;
-    this.bounds = bounds;
-  }
-
-  checkBounds(): boolean {
-    return this.bounds.xMin <= this.x
-      && this.y <= this.bounds.yMax
-      && !this.pastBounds();
-  }
-
-  pastBounds(): boolean {
-    return this.x > this.bounds.xMax || this.y < this.bounds.yMin;
-  }
-
-  step() {
-    this.x += this.vx;
-    this.y += this.vy;
-
-    this.yMax = Math.max(this.yMax, this.y);
-
-    this.vx -= Math.sign(this.vx);
-    this.vy -= 1;
-  }
-
-  run(): boolean {
-    while (!this.pastBounds()) {
-      this.step();
-
-      if (this.checkBounds()) {
-        // log(`probe in bounds @ ${this.x},${this.y}, yMax = ${this.yMax}`);
-        return true;
-      }
-    }
-
-    return false;
-  }
+enum CheckBoundsResult {
+  Short,
+  Hit,
+  Far,
 }
 
+const checkBounds = (x: number, y: number, bounds: TargetBounds): CheckBoundsResult => {
+  if (x > bounds.xMax || y < bounds.yMin) { return CheckBoundsResult.Far; }
+  if (x < bounds.xMin || y > bounds.yMax) { return CheckBoundsResult.Short; }
+
+  return CheckBoundsResult.Hit;
+};
+
 const triangularNumbersCache: Record<number, number> = {};
-const nthTriangularNumber = (n) => {
+const nthTriangularNumber = (n: number) => {
   if (!triangularNumbersCache[n]) {
     triangularNumbersCache[n] = (n * (n + 1)) / 2;
   }
@@ -72,20 +31,41 @@ const nthTriangularNumber = (n) => {
   return triangularNumbersCache[n];
 };
 
-// TODO: Wrong
-const trianglesBetweenBounds = (nMin: number, triangleMax: number): number[] => {
-  const valid = [];
-  let cur = nMin;
-  while (nthTriangularNumber(cur) - cur <= triangleMax) {
-    valid.push(cur);
+/*
+  All n s.t. triangle(n) lands within the bounds _on some step_
 
-    cur += 1;
+  6     5     4    3   2  1 0
+  |_____|_____|____|___|__|_|
+                 xxxx
+
+  sum(6 5 4 3 2 1)  no
+  sum(6 5 4 3 2)    no
+  sum(6 5 4 3)      no
+  sum(6 5 4)        yes
+*/
+const trianglesBetweenBounds = (nMin: number, nMax: number, bounds: TargetBounds): number[] => {
+  const valid = [nMin, nMax];
+
+  for (let n = nMin + 1; n < nMax; n += 1) {
+    let pos = nthTriangularNumber(n);
+    let cur = 0;
+
+    while (cur < n) {
+      pos -= cur;
+
+      if (bounds.xMin <= pos && pos <= bounds.xMax) {
+        valid.push(n);
+        break;
+      }
+
+      cur += 1;
+    }
   }
 
   return valid;
 };
 
-const findSolutions = (input: string): Probe[] => {
+const findSolutions = (input: string): ShotResult[] => {
   const match: number[] = input.match(/([-1234567890]+)/g)!.map((n) => parseInt(n, 10))!;
   const bounds = {
     xMin: match[0],
@@ -108,66 +88,69 @@ const findSolutions = (input: string): Probe[] => {
     vxMax = first step is the only step to land in the bounds
   */
   const vxMax = bounds.xMax;
+  const vxValid = trianglesBetweenBounds(vxMin, vxMax, bounds);
 
-  // // TODO: Fancy math later
-  // /*
-  //   For a given vx s.t. vxMin <= vx <= vxMax, find which steps it will be
-  //   within the bounds on
-  // */
+  const vyValidSet: Set<number> = new Set();
 
-  // /*
-  //   TODO: Are we sure of this?
-  // */
-  // let minStepsToGetThereX = vxMin;
-  // let totalDistanceWithMinVx = (vxMin * (vxMin + 1)) / 2;
+  /*
+    All vy s.t. it's in-bounds on some step
+    150 is an arbitrary limit, high enough that my result stops changing
+  */
+  for (let ovy = bounds.yMin; ovy <= 150; ovy += 1) {
+    let cur = 0;
+    let vy = ovy;
 
-  // for (let i = vxMin; i > 0; i -= 1) {
-  //   totalDistanceWithMinVx -= i;
-  //   if (totalDistanceWithMinVx < bounds.xMin) {
-  //     break;
-  //   }
+    while (cur > bounds.yMin) {
+      cur += vy;
+      vy -= 1;
 
-  //   minStepsToGetThereX -= 1;
-  // }
-
-  // const solutions = [];
-  // let maxY = 0;
-
-  // /*
-  //   Find vy s.t. at minStepsToGetThereX y >= bounds.yMin (has not fallen too far)
-
-  //   Probe will cross y = 0 at step 2vy. Every subsequent step n, probe will be at
-  //   y = -(sum of first n numbers)
-
-  //   When vy hits 0, at step vy, probe will be at y = (sum of first vy numbers)
-
-  //   Probe's position at step n =
-  //     n <=
-  // */
-
-  const vxValid = trianglesBetweenBounds(vxMin, bounds.xMax);
-  log(`got ${vxValid} valid vx values`);
-
-  const solutions = [];
-
-  dir({ bounds, vxMin, vxMax });
-  for (let vx = vxMin; vx <= vxMax; vx += 1) {
-    for (let vy = bounds.yMin; vy <= 100; vy += 1) {
-      const probe = new Probe(vx, vy, bounds);
-      const hitTarget = probe.run();
-
-      if (hitTarget) {
-        // log(`probe hit target with v = ${vx},${vy}, probe @ ${probe.x}, ${probe.y}, yMax = ${probe.yMax}`);
-        solutions.push(probe);
+      if (cur <= bounds.yMax && cur >= bounds.yMin) {
+        vyValidSet.add(ovy);
+        break;
       }
     }
   }
 
-  // log(`hit ${solutions.length} of ${count} tries`);
-  // dir(new Set(solutions.map((p) => p.ovx)));
+  const solutions = [];
+  // let count = 0;
+  for (const vx of vxValid) {
+    for (const vy of vyValidSet) {
+      let x = 0;
+      let y = 0;
+
+      let vyCur = vy;
+      let vxCur = vx;
+
+      // count += 1;
+
+      let yMax = 0;
+
+      while (x < bounds.xMax && y > bounds.yMin) {
+        x += vxCur;
+        y += vyCur;
+
+        vxCur -= Math.sign(vxCur);
+        vyCur -= 1;
+
+        if (vyCur === 0) { yMax = y; }
+
+        const result = checkBounds(x, y, bounds);
+
+        if (result === CheckBoundsResult.Hit) {
+          solutions.push({ vx, vy, yMax });
+          break;
+        } else if (result === CheckBoundsResult.Far) {
+          break;
+        }
+      }
+    }
+  }
+
+  // log(`hit ${solutions.length} of ${count}`);
+  // log(`naive would have used ${vxMax - vxMin} * ${150 - bounds.yMin} = ${(vxMax - vxMin) * (100 - bounds.yMin)} tries`);
 
   return solutions;
-}
+};
 
 export const a = (input: string) => {
   const solutions = findSolutions(input);
@@ -175,8 +158,4 @@ export const a = (input: string) => {
   return Math.max(...solutions.map((s) => s.yMax));
 };
 
-export const b = (input: string) => {
-  const solutions = findSolutions(input);
-
-  return solutions.length;
-};
+export const b = (input: string) => findSolutions(input).length;

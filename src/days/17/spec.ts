@@ -19,7 +19,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
       });
     });
 
-    xdescribe('Solution', () => {
+    describe('Solution', () => {
       const knownSolution = 4950;
 
       test(`${knownSolution}`, () => {
@@ -30,7 +30,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
     });
   });
 
-  xdescribe('Part 2', () => {
+  describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
         [example1, 112],
