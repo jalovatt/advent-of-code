@@ -10,11 +10,12 @@ export const explode = (s: string): string => {
   let explodeStart = 0;
 
   for (let i = 0; i < s.length; i += 1) {
-    if (s[i] === '[') {
+    const c = s[i];
+    if (c === '[') {
       depth += 1;
-    } else if (s[i] === ']') {
+    } else if (c === ']') {
       depth -= 1;
-    } else if (depth > 4 && Digits.has(s[i])) {
+    } else if (depth > 4 && Digits.has(c)) {
       explodeStart = i;
       break;
     }
