@@ -15,18 +15,15 @@ const WINDOW = [
   [1, 1],
 ];
 
-const keyCache: Record<number, string[]> = {};
-const getKey = (y: number, x: number) => {
-  if (!keyCache[y]?.[x]) {
-    if (!keyCache[y]) {
-      keyCache[y] = [];
-    }
+/*
+  - Hashing with a string like `${y},${x}` is surprisingly slow. If we know the max
+  value M that will need to be hashed, we can just multiply y by something larger
+  than M and store them both in a single number
 
-    keyCache[y][x] = `${y},${x}`;
-  }
-
-  return keyCache[y][x];
-};
+  - y << 8 is a faster y * 255
+*/
+// eslint-disable-next-line no-bitwise
+const getKey = (y: number, x: number) => (y << 8) + x;
 
 const getWindowValue = (y: number, x: number, field: Field, infiniteAreLit: boolean): number => {
   const digits = [];
