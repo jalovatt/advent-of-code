@@ -1,6 +1,6 @@
 /* eslint-disable no-labels */
 import circuitBreaker from '../../utilities/circuitBreaker';
-import { dir, log, inspect } from '../../utilities/logging';
+import { dir } from '../../utilities/logging';
 import { split } from '../../utilities/processing';
 import rotations, { Rotation } from './rotations';
 
@@ -16,33 +16,68 @@ type Beacon = Vec3;
 type ScannerBeacon = [number, number];
 type CorrespondingBeacons = [ScannerBeacon, ScannerBeacon];
 
+const addVec3 = (l: Vec3, r: Vec3): Vec3 => ({
+  x: l.x + r.x,
+  y: l.y + r.y,
+  z: l.z + r.z,
+});
+
+const subVec3 = (l: Vec3, r: Vec3): Vec3 => ({
+  x: l.x - r.x,
+  y: l.y - r.y,
+  z: l.z - r.z,
+});
+
+const eqlVec3 = (l: Vec3, r: Vec3): boolean => (
+  l.x === r.x && l.y === r.y && l.z === r.z
+);
+
 export const determinant = (r: Rotation): number => (
   (r[0][0] * (r[1][1] * r[2][2] - r[1][2] * r[2][1]))
   - (r[0][1] * (r[1][0] * r[2][2] - r[1][2] * r[2][0]))
   + (r[0][2] * (r[1][0] * r[2][1] - r[1][1] * r[2][0]))
 );
 
-// TODO: See if Manhattan distances are unique enough
-// Would be faster, and simpler to figure out offsets
+export const rotateVec3 = (v: Vec3, r: number): Vec3 => {
+  if (r === 0) { return v; }
+  const rotation = rotations[r];
+
+  if (!rotation) { throw new Error(`rotation ${r} does not exist`); }
+
+  return {
+    x: v.x * rotation[0][0] + v.y * rotation[0][1] + v.z * rotation[0][2],
+    y: v.x * rotation[1][0] + v.y * rotation[1][1] + v.z * rotation[1][2],
+    z: v.x * rotation[2][0] + v.y * rotation[2][1] + v.z * rotation[2][2],
+  };
+};
+
+/*
+  Skipping the sqrt for perf; we don't need the distance, just a unique value
+*/
 const distanceSquared = (l: Vec3, r: Vec3): number => (
   (r.x - l.x) ** 2 + (r.y - l.y) ** 2 + (r.z - l.z) ** 2
 );
 
+const manhattanDistance = (v: Vec3): number => Math.abs(v.x) + Math.abs(v.y) + Math.abs(v.z);
+
 /**
- * Find the intersection of two arrays, based on equality of either the elements
- * themselves or a specified property. If a prop is given, the returned elements
- * will only have referential equality to those in `r`.
+ * Find the intersection of two arrays. Use `needLength > 0` will return early
+ * if the intersection can't meet the required size
  */
-const intersection = <T>(l: T[], r: T[], prop = null): T[] => {
+const intersection = <T>(l: T[], r: T[], needLength = 0): T[] | null => {
   const s = new Set();
   const int: T[] = [];
 
   for (let i = 0; i < l.length; i += 1) {
-    s.add(prop ? l[i][prop] : l[i]);
+    s.add(l[i]);
   }
 
   for (let i = 0; i < r.length; i += 1) {
-    if (s.has(prop ? r[i][prop] : r[i])) {
+    if (needLength && int.length + (r.length - i) < needLength) {
+      return null;
+    }
+
+    if (s.has(r[i])) {
       int.push(r[i]);
     }
   }
@@ -70,57 +105,26 @@ export const subtraction = <T>(l: T[], r: T[], prop = null): T[] => {
   return int;
 };
 
-export const rotateVec3 = (v: Vec3, r: number): Vec3 => {
-  if (r === 0) { return v; }
-  const rotation = rotations[r];
+const transformScanner = (s: Scanner, r: number, offset: Vec3): Scanner => {
+  if (s.x || s.y || s.z) { throw new Error('Scanner has already been transformed'); }
 
-  if (!rotation) { throw new Error(`rotation ${r} does not exist`); }
+  const transformed = addVec3(s, offset) as Scanner;
+  transformed.orientation = r;
+  transformed.beacons = [];
 
-  return {
-    x: v.x * rotation[0][0] + v.y * rotation[0][1] + v.z * rotation[0][2],
-    y: v.x * rotation[1][0] + v.y * rotation[1][1] + v.z * rotation[1][2],
-    z: v.x * rotation[2][0] + v.y * rotation[2][1] + v.z * rotation[2][2],
-  };
+  for (let bi = 0; bi < s.beacons.length; bi += 1) {
+    const b = s.beacons[bi];
+    transformed.beacons.push(addVec3(rotateVec3(b, r), offset) as Beacon);
+  }
 
-  // return {
-  //   x: rotation[0][0] * v.x + rotation[1][0] * v.x + rotation[2][0] * v.x,
-  //   y: rotation[0][1] * v.y + rotation[1][1] * v.y + rotation[2][1] * v.y,
-  //   z: rotation[0][2] * v.z + rotation[1][2] * v.z + rotation[2][2] * v.z,
-  // };
+  return transformed;
 };
 
-const addVec3 = (l: Vec3, r: Vec3): Vec3 => ({
-  x: l.x + r.x,
-  y: l.y + r.y,
-  z: l.z + r.z,
-});
-
-const subVec3 = (l: Vec3, r: Vec3): Vec3 => ({
-  x: l.x - r.x,
-  y: l.y - r.y,
-  z: l.z - r.z,
-});
-
-const eqlVec3 = (l: Vec3, r: Vec3): boolean => (
-  l.x === r.x && l.y === r.y && l.z === r.z
-);
-
-// Scanner coords are ignored; will only work for beacons of scanners currently
-// reading 0,0,0
-const transformScanner = (s: Scanner, r: number, offset: Vec3): Scanner => ({
-  ...addVec3(s, offset),
-  orientation: r,
-  beacons: s.beacons.map((b) => addVec3(rotateVec3(b, r), offset) as Beacon),
-});
-
-const findRotation = (corr: CorrespondingBeacons[], scanners: Scanner[], sourceOnRight = false): [number, Vec3] => {
-  // const TEMP_LOGGING = (corr[0][0][0] === 1 && corr[0][1][0] === 4);
-  // if (TEMP_LOGGING) {
-  //   log('\n');
-  //   log('comparing scanners 1 and 4:');
-  //   dir(corr);
-  //   log();
-  // }
+const findTransform = (
+  corr: CorrespondingBeacons[],
+  scanners: Scanner[],
+  sourceOnRight = false,
+): [number, Vec3] => {
   const sourceIndex = sourceOnRight ? 1 : 0;
   const targetIndex = sourceOnRight ? 0 : 1;
 
@@ -137,10 +141,6 @@ const findRotation = (corr: CorrespondingBeacons[], scanners: Scanner[], sourceO
       rotateVec3(scanners[targetFirst[0]].beacons[targetFirst[1]], r),
     );
 
-    // if (TEMP_LOGGING) {
-    //   log(`\n    r = ${r}\n  0:    ${inspect(target)}    (target)`);
-    // }
-
     let match = true;
 
     for (let i = 1; i < corr.length; i += 1) {
@@ -148,10 +148,6 @@ const findRotation = (corr: CorrespondingBeacons[], scanners: Scanner[], sourceO
         scanners[corr[i][sourceIndex][0]].beacons[corr[i][sourceIndex][1]],
         rotateVec3(scanners[corr[i][targetIndex][0]].beacons[corr[i][targetIndex][1]], r),
       );
-
-      // if (TEMP_LOGGING) {
-      //   log(`${i.toString().padStart(3, ' ')}:    ${inspect(diff)}`);
-      // }
 
       if (!eqlVec3(diff, target)) {
         match = false;
@@ -199,7 +195,8 @@ const registerScanners = (input: string) => {
   scanners.shift();
 
   const pairwiseDistances: Record<number, number[][]> = {};
-  scanners.forEach((s, si) => {
+  for (let si = 0; si < scanners.length; si += 1) {
+    const s = scanners[si];
     pairwiseDistances[si] = [];
     for (let i = 0; i < s.beacons.length; i += 1) {
       if (!pairwiseDistances[si][i]) {
@@ -216,24 +213,26 @@ const registerScanners = (input: string) => {
         pairwiseDistances[si][j][i] = d;
       }
     }
-  });
-
-  // dir(pairwiseDistances);
+  }
 
   const overlaps: [ScannerBeacon, ScannerBeacon, number[]][] = [];
 
   for (let i = 0; i < scanners.length - 1; i += 1) {
     for (let j = i + 1; j < scanners.length; j += 1) {
-      const s1 = scanners[i];
-      const s2 = scanners[j];
+      /*
+        Perf: If we haven't found a match after 12 beacons, there aren't enough left
+        to get a match.
 
+        Thanks @ https://www.reddit.com/r/adventofcode/comments/rk1smr/comment/hpa1ux4/?utm_source=share&utm_medium=web2x&context=3
+      */
       beaconLoop:
-      for (let k = 0; k < s1.beacons.length; k += 1) {
-        for (let l = 0; l < s2.beacons.length; l += 1) {
+      for (let k = 0; k < 12; k += 1) {
+        for (let l = 0; l < 12; l += 1) {
           const b1Distances = pairwiseDistances[i][k];
           const b2Distances = pairwiseDistances[j][l];
 
-          const int = intersection(b1Distances, b2Distances);
+          const int = intersection(b1Distances, b2Distances, 12);
+          if (!int) { continue; }
           if (int.length >= 12) {
             overlaps.push([[i, k], [j, l], int]);
             break beaconLoop;
@@ -260,11 +259,9 @@ const registerScanners = (input: string) => {
       const lCorresponding = pairwiseDistances[l[0]][l[1]].indexOf(d);
       const rCorresponding = pairwiseDistances[r[0]][r[1]].indexOf(d);
 
-      corr.push([[l[0], lCorresponding], [r[0], rCorresponding], d]);
+      corr.push([[l[0], lCorresponding], [r[0], rCorresponding]]);
     }
 
-    // log(`\ncorresponding beacons between S${l[0]}B${l[1]} and S${r[0]}B${r[1]}:`);
-    // dir(corr);
     correspondingToCheck.push(corr);
   }
 
@@ -276,13 +273,11 @@ const registerScanners = (input: string) => {
     });
 
     const c = correspondingToCheck.shift()!;
-  // for (let i = 0; i < correspondingToCheck.length; i += 1) {
-  //   const c = correspondingToCheck[i];
     const lScanner = c[0][0][0];
     const rScanner = c[0][1][0];
 
-    let sourceScanner;
-    let targetScanner;
+    let sourceScanner!: number;
+    let targetScanner!: number;
     if (knownScanners.has(lScanner)) {
       if (knownScanners.has(rScanner)) {
         continue;
@@ -295,50 +290,38 @@ const registerScanners = (input: string) => {
       targetScanner = lScanner;
     }
 
-    // const sourceScanner = c[0][0][0];
-
     if (sourceScanner === undefined) {
       correspondingToCheck.push(c);
       continue;
     }
 
-    const [r, offset] = findRotation(c, scanners, sourceScanner === rScanner);
+    const found = findTransform(c, scanners, sourceScanner === rScanner);
 
-    // const targetScanner = c[0][1][0];
     const src = scanners[targetScanner];
-    scanners[targetScanner] = transformScanner(src, r, offset);
+    scanners[targetScanner] = transformScanner(src, found[0], found[1]);
     knownScanners.add(targetScanner);
-
-    log(`scanner ${targetScanner} overlaps scanner ${sourceScanner} @ r=${r}, offset=${inspect(offset)}`);
-
-    // dir({
-    //   [`${sourceScanner} (ref)`]: scanners[sourceScanner],
-    //   // [`${scannerIndex} was`]: src,
-    //   [targetScanner]: scanners[targetScanner],
-    // }, { depth: 4 });
   }
 
-  // dir(overlaps);
-
-  // dir(scanners, { depth: 3 });
   return scanners;
 };
 
-export const a = (input: string) => {
+export const a = (input: string): string[] => {
   const scanners = registerScanners(input);
 
-  const merged = scanners.reduce((acc, s) => {
-    s.beacons.forEach((b) => acc.add(`${b.x},${b.y},${b.z}`));
-    return acc;
-  }, new Set() as Set<string>);
+  const merged: Set<string> = new Set();
 
-  // dir(merged);
+  for (let si = 0; si < scanners.length; si += 1) {
+    const s = scanners[si];
+    for (let bi = 0; bi < s.beacons.length; bi += 1) {
+      const b = s.beacons[bi];
+      merged.add(`${b.x},${b.y},${b.z}`);
+    }
+  }
+
   return Array.from(merged);
 };
 
-const manhattanDistance = (v: Vec3): number => Math.abs(v.x) + Math.abs(v.y) + Math.abs(v.z);
-
-export const b = (input: string) => {
+export const b = (input: string): number => {
   const scanners = registerScanners(input);
 
   let max = 0;

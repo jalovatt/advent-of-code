@@ -1,5 +1,5 @@
 import loadText from '../../utilities/loadText';
-import { a, b, determinant, rotateVec3, subtraction } from '.';
+import { a, b, determinant, subtraction } from '.';
 import rotations from './rotations';
 import { split } from '../../utilities/processing';
 import { dir, log } from '../../utilities/logging';
@@ -229,47 +229,11 @@ const expected1 = `
 1994,-1805,1792
 `;
 
-const example2 = `
-1
-`;
-
 describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
   describe('rotation stuff', () => {
     describe('matrix handedness', () => {
       rotations.forEach((r, i) => {
         test(`${i}`, () => expect(determinant(r)).toEqual(1));
-      });
-    });
-
-    describe('rotation', () => {
-      const v = { x: 1, y: 2, z: 3 };
-      test.each([
-        [0, v],
-        // [1, v],
-        // [2, v],
-        // [3, v],
-        // [4, v],
-        // [5, v],
-        // [6, v],
-        // [7, v],
-        // [8, v],
-        // [9, v],
-        // [10, v],
-        // [11, v],
-        // [12, v],
-        // [13, v],
-        // [14, v],
-        // [15, v],
-        // [16, v],
-        // [17, v],
-        // [18, v],
-        // [19, v],
-        // [20, v],
-        // [21, v],
-        // [22, v],
-        // [23, v],
-      ])('%p => %p', (given, expected) => {
-        expect(rotateVec3(v, given)).toEqual(expected);
       });
     });
   });

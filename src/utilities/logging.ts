@@ -1,6 +1,14 @@
 import { performance } from 'perf_hooks';
 import util from 'util';
 
+const timers: Record<string, number> = {};
+const counters: Record<string, number> = {};
+
+beforeEach(() => {
+  Object.keys(timers).forEach((k) => delete timers[k]);
+  Object.keys(counters).forEach((k) => delete counters[k]);
+});
+
 export const log = (...args: any) => {
   if (args.length) {
     process.stdout.write(`${args.length === 1 ? args[0] : args}`);
@@ -14,7 +22,6 @@ export const dir = (obj: any, options = {}) => {
   process.stdout.write(`${inspect(obj, options)}\n`);
 };
 
-const timers: Record<string, number> = {};
 export const time = (label: string, stop = false) => {
   const t = performance.now();
   if (timers[label]) {
@@ -31,7 +38,6 @@ export const time = (label: string, stop = false) => {
   }
 };
 
-const counters: Record<string, number> = {};
 export const counter = (label: string, done = false) => {
   if (!counters[label]) {
     counters[label] = 1;
