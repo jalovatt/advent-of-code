@@ -8,8 +8,10 @@ export const log = (...args: any) => {
   process.stdout.write('\n');
 };
 
+export const inspect = (obj: any, options = {}) => util.inspect(obj, options);
+
 export const dir = (obj: any, options = {}) => {
-  process.stdout.write(`${util.inspect(obj, options)}\n`);
+  process.stdout.write(`${inspect(obj, options)}\n`);
 };
 
 const timers: Record<string, number> = {};

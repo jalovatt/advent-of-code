@@ -23,6 +23,15 @@ module.exports = {
         exceptAfterSingleLine: true,
       },
     ],
+    'object-curly-newline': [
+      'error',
+      {
+        minProperties: 8,
+        consistent: true,
+      },
+    ],
+    'no-bitwise': 0,
+    'no-continue': 0,
     // So we can use for...of
     'no-restricted-syntax': 0,
   },

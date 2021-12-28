@@ -9,4 +9,9 @@ module.exports = {
   transform: {
     '^.+\\.(?:t|j)s$': '@swc/jest',
   },
+  moduleFileExtensions: [
+    'js',
+    'ts',
+    'txt',
+  ]
 };
