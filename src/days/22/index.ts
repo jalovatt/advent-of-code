@@ -1,137 +1,155 @@
-import { dir, log, time } from '../../utilities/logging';
+/*
+  Thanks to @chadjaros - https://github.com/chadjaros/advent-of-code/blob/main/src/utils/point-3d.ts
+  for a bunch of 3D math where I had the right idea on paper but no idea how to
+  turn it into algebra
+*/
 import { split } from '../../utilities/processing';
 
+type Maybe<T> = T | null | undefined;
+
+type Point3 = { x: number, y: number, z: number };
+
 type Region3 = {
-  x1: number,
-  x2: number,
-  y1: number,
-  y2: number,
-  z1: number,
-  z2: number,
+  a: Point3;
+  b: Point3;
 };
 
-interface Instruction extends Region3 {
-  state: 0 | 1,
-}
-
-class Field {
-  zMap: Map<bigint, Map<bigint, number>>;
-
-  constructor() {
-    this.zMap = new Map();
-  }
-
-  set(z: bigint, k: bigint, v: number) {
-    let m;
-    if (!this.zMap.has(z)) {
-      m = new Map();
-
-      this.zMap.set(z, m);
-    } else {
-      m = this.zMap.get(z)!;
-    }
-
-    m!.set(k, v);
-  }
-
-  get(z: bigint, k: bigint) {
-    return this.zMap.get(z)?.get(k) ?? 0;
-  }
-
-  * [Symbol.iterator]() {
-    for (const z of this.zMap.values()) {
-      for (const v of z.values()) {
-        yield v;
-      }
-    }
-  }
-}
+type Instruction = { value: 1 | 0, a: Point3, b: Point3 };
 
 const intPattern = '[-0123456789]+';
 const lineExp = new RegExp(`(\\w+) x=(${intPattern})..(${intPattern}),y=(${intPattern})..(${intPattern}),z=(${intPattern})..(${intPattern})`);
 
-export const parseLine = (line: string): Instruction => {
-  const matched = line.match(lineExp)!;
-  const [, state, x1, x2, y1, y2, z1, z2] = matched;
-
-  return {
-    state: state === 'on' ? 1 : 0,
-    x1: parseInt(x1, 10),
-    x2: parseInt(x2, 10),
-    y1: parseInt(y1, 10),
-    y2: parseInt(y2, 10),
-    z1: parseInt(z1, 10),
-    z2: parseInt(z2, 10),
-  };
-};
-
-// eslint-disable-next-line no-bitwise
-const getKey = (x: bigint, y: bigint): bigint => (x << 17n) + y;
-
-const updateField = (instruction: Instruction, field: Field, bounds?: Region3) => {
-  const xMin = BigInt(bounds ? Math.max(bounds.x1, instruction.x1) : instruction.x1);
-  const xMax = BigInt(bounds ? Math.min(bounds.x2, instruction.x2) : instruction.x2);
-  const yMin = BigInt(bounds ? Math.max(bounds.y1, instruction.y1) : instruction.y1);
-  const yMax = BigInt(bounds ? Math.min(bounds.y2, instruction.y2) : instruction.y2);
-  const zMin = BigInt(bounds ? Math.max(bounds.z1, instruction.z1) : instruction.z1);
-  const zMax = BigInt(bounds ? Math.min(bounds.z2, instruction.z2) : instruction.z2);
-
-  for (let x = xMin; x <= xMax; x += 1n) {
-    for (let y = yMin; y <= yMax; y += 1n) {
-      for (let z = zMin; z <= zMax; z += 1n) {
-        const k = getKey(x, y);
-
-        try {
-          field.set(z, k, instruction.state);
-        } catch (err) {
-          throw new Error(`Unable to set key '${k}' (${x}, ${y}, ${z})\n${err}`);
-        }
-      }
-    }
-  }
-};
-
-const countField = (field: Field): number => {
-  // if (!bounds) {
-  let count = 0;
-  for (const v of field) {
-    count += v;
-  }
-
-  return count;
-};
+const intersects = (t: Region3, u: Region3): boolean => !(
+  t.a.x > u.b.x || u.a.x > t.b.x
+  || t.a.y > u.b.y || u.a.y > t.b.y
+  || t.a.z > u.b.z || u.a.z > t.b.z
+);
 
 const aBounds: Region3 = {
-  x1: -50,
-  x2: 50,
-  y1: -50,
-  y2: 50,
-  z1: -50,
-  z2: 50,
+  a: { x: -50.5, y: -50.5, z: -50.5 },
+  b: { x: 50.5, y: 50.5, z: 50.5 },
 };
 
-export const a = (input: string) => {
-  const instructions = split(input).map(parseLine);
+const getIntersection = (l: Region3, r: Region3): Region3 => ({
+  a: { x: Math.max(l.a.x, r.a.x), y: Math.max(l.a.y, r.a.y), z: Math.max(l.a.z, r.a.z) },
+  b: { x: Math.min(l.b.x, r.b.x), y: Math.min(l.b.y, r.b.y), z: Math.min(l.b.z, r.b.z) },
+});
 
-  const field = new Field();
+const subtractCuboids = (l: Region3, r: Region3): Region3[] => {
+  const int = getIntersection(l, r);
 
-  for (let i = 0; i < instructions.length; i += 1) {
-    updateField(instructions[i], field, aBounds);
+  const slices: Region3[] = [];
+
+  if (int.a.z > l.a.z) {
+    slices.push({
+      a: { x: l.a.x, y: l.a.y, z: l.a.z },
+      b: { x: l.b.x, y: l.b.y, z: int.a.z },
+    });
   }
 
-  return countField(field);
-};
-
-export const b = (input: string) => {
-  const instructions = split(input).map(parseLine);
-
-  const field = new Field();
-
-  for (let i = 0; i < instructions.length; i += 1) {
-    time(`${i} of ${instructions.length}`);
-    updateField(instructions[i], field);
-    time(`${i} of ${instructions.length}`, true);
+  if (int.b.z < l.b.z) {
+    slices.push({
+      a: { x: l.a.x, y: l.a.y, z: int.b.z },
+      b: { x: l.b.x, y: l.b.y, z: l.b.z },
+    });
   }
 
-  return countField(field);
+  if (int.a.x > l.a.x) {
+    slices.push({
+      a: { x: l.a.x, y: l.a.y, z: int.a.z },
+      b: { x: int.a.x, y: l.b.y, z: int.b.z },
+    });
+  }
+
+  if (int.b.x < l.b.x) {
+    slices.push({
+      a: { x: int.b.x, y: l.a.y, z: int.a.z },
+      b: { x: l.b.x, y: l.b.y, z: int.b.z },
+    });
+  }
+
+  if (int.a.y > l.a.y) {
+    slices.push({
+      a: { x: int.a.x, y: l.a.y, z: int.a.z },
+      b: { x: int.b.x, y: int.a.y, z: int.b.z },
+    });
+  }
+
+  if (int.b.y < l.b.y) {
+    slices.push({
+      a: { x: int.a.x, y: int.b.y, z: int.a.z },
+      b: { x: int.b.x, y: l.b.y, z: int.b.z },
+    });
+  }
+
+  return slices;
 };
+
+const sumRegionVolumes = (regions: Region3[]): number => {
+  let sum = 0;
+
+  for (let i = 0; i < regions.length; i += 1) {
+    const r = regions[i];
+    sum += (r.b.x - r.a.x) * (r.b.y - r.a.y) * (r.b.z - r.a.z);
+  }
+
+  return sum;
+};
+
+export const parseLine = (line: string, bounds: Maybe<Region3>): Instruction | false => {
+  const matched = line.match(lineExp)!;
+
+  const [, state, x1, x2, y1, y2, z1, z2] = matched;
+
+  // 0.5 corrects for each point being a full cube
+  const region: Instruction = {
+    value: state === 'on' ? 1 : 0,
+    a: { x: parseInt(x1, 10) - 0.5, y: parseInt(y1, 10) - 0.5, z: parseInt(z1, 10) - 0.5 },
+    b: { x: parseInt(x2, 10) + 0.5, y: parseInt(y2, 10) + 0.5, z: parseInt(z2, 10) + 0.5 },
+  };
+
+  return (!bounds || intersects(bounds, region)) && region;
+};
+
+const solve = (input: string, bounds: Maybe<Region3>, stopAt: Maybe<number>) => {
+  const instructions = split(input)
+    .map((line) => parseLine(line, bounds))
+    .filter(Boolean) as Instruction[];
+
+  const existing: Region3[] = [];
+
+  const end = stopAt || instructions.length;
+
+  for (let i = 0; i < end; i += 1) {
+    const indicesToIgnore = [];
+    const toAdd = [];
+
+    for (let j = 0; j < existing.length; j += 1) {
+      const cur = instructions[i];
+      const was = existing[j];
+      const slices = intersects(was, cur) && subtractCuboids(was, cur);
+
+      // If an intersection, split the existing around it and drop the original
+      if (slices) {
+        indicesToIgnore.push(j);
+        toAdd.push(...slices);
+      }
+    }
+
+    if (instructions[i].value) { toAdd.push(instructions[i]); }
+
+    if (indicesToIgnore.length) {
+      for (let si = indicesToIgnore.length - 1; si >= 0; si -= 1) {
+        existing.splice(indicesToIgnore[si], 1);
+      }
+    }
+
+    existing.push(...toAdd);
+  }
+
+  return sumRegionVolumes(existing);
+};
+
+export const a = (input: string, stopAt?: Maybe<number>): number => solve(input, aBounds, stopAt);
+
+export const b = (input: string, stopAt?: Maybe<number>) => solve(input, null, stopAt);

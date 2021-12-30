@@ -105,21 +105,29 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
     test('parseLine', () => {
       const given = 'on x=10..12,y=10..12,z=10..12';
       const expected = {
-        state: 1, x1: 10, x2: 12, y1: 10, y2: 12, z1: 10, z2: 12,
+        value: 1, a: { x: 9.5, y: 9.5, z: 9.5 }, b: { x: 12.5, y: 12.5, z: 12.5 },
       };
 
-      expect(parseLine(given)).toEqual(expected);
+      expect(parseLine(given, null)).toEqual(expected);
     });
   });
 
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        ['on x=10..12,y=10..12,z=10..12', 27],
-        [example1, 39],
-        [example2, 590784],
-      ])('%p => %p', (given, expected) => {
-        expect(a(given)).toEqual(expected);
+        [['on x=10..12,y=10..12,z=10..12', null], 27],
+        // [[example1, 1], 27],
+        // [[example1, 2], 46],
+        // [[example1, 3], 38],
+        [[example1, null], 39],
+
+        // [[example2, 1], 139590],
+        // [[example2, 2], 210918],
+        // [[example2, 3], 225476],
+        // [[example2, 4], 328328],
+        [[example2, null], 590784],
+      ] as [[string, number | null], number][])('%p => %p', (given, expected) => {
+        expect(a(given[0], given[1])).toEqual(expected);
       });
     });
 
@@ -134,7 +142,7 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
     });
   });
 
-  xdescribe('Part 2', () => {
+  describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
         [example3, 2758514936282235],
@@ -143,8 +151,8 @@ describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
       });
     });
 
-    xdescribe('Solution', () => {
-      const knownSolution = null;
+    describe('Solution', () => {
+      const knownSolution = 1255547543528356;
 
       test(`${knownSolution}`, () => {
         const solution = b(input);
