@@ -32,7 +32,11 @@ module.exports = {
     ],
     'no-bitwise': 0,
     'no-continue': 0,
-    // So we can use for...of
+    // So we can use for...of (bad for perf though, probably shouldn't)
     'no-restricted-syntax': 0,
+    'prefer-destructuring': 0,
+    'no-labels': 0,
+    '@typescript-eslint/no-loop-func': 0,
+    'no-param-reassign': 0,
   },
 };

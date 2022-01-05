@@ -38,13 +38,18 @@ export const time = (label: string, stop = false) => {
   }
 };
 
-export const counter = (label: string, done = false) => {
+export const counter = (label: string, print = false, reset = false) => {
   if (!counters[label]) {
     counters[label] = 1;
-  } else if (done) {
-    log(`counter - ${label}: ${counters[label]}`);
-    delete counters[label];
   } else {
     counters[label] += 1;
+  }
+
+  if (print) {
+    log(`counter - ${label}: ${counters[label]}`);
+  }
+
+  if (reset) {
+    delete counters[label];
   }
 };
