@@ -25,7 +25,7 @@ export const dir = (obj: any, options = {}) => {
 export const time = (label: string, stop = false) => {
   const t = performance.now();
   if (timers[label]) {
-    const diff = Math.trunc((t - timers[label]) * 10) / 10;
+    const diff = Math.trunc((t - timers[label]) * 100) / 100;
     log(`timer - ${label}: ${diff}ms`);
 
     if (stop) {

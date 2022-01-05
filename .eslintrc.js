@@ -38,5 +38,6 @@ module.exports = {
     'no-labels': 0,
     '@typescript-eslint/no-loop-func': 0,
     'no-param-reassign': 0,
+    'no-nested-ternary': 0,
   },
 };

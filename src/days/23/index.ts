@@ -1,12 +1,22 @@
+import { FibonacciHeap } from '@tyriar/fibonacci-heap';
+import type { INode } from '@tyriar/fibonacci-heap';
 import circuitBreaker from '../../utilities/circuitBreaker';
-import { counter, dir, inspect, log } from '../../utilities/logging';
+import { log } from '../../utilities/logging';
 import { split } from '../../utilities/processing';
 
 type Letter = 'A' | 'B' | 'C' | 'D';
 type PositionLetter = [number, Letter];
-type State = PositionLetter[];
+type DecodedState = PositionLetter[];
 
-const LETTERS = { A: true, B: true, C: true, D: true };
+type GraphNode = [number, number?][];
+type Graph = Record<number, GraphNode>;
+
+// [pos, cumulative cost][]
+type PathCost = [number, number][];
+
+// Just specifying that value IS defined
+export interface StateNode extends INode<number, string> { value: string }
+export type StateNodes = Record<string, StateNode>;
 
 /*
 0   1   *   2   *   3   *   4   *   5   6
@@ -27,8 +37,7 @@ hallway = n < 7
 up/down in room = n +/- 4
 */
 
-type Node = [number, number?][];
-const graph: Record<number, Node> = {
+const graph: Graph = {
   0: [[1]],
   1: [[0], [2, 2], [7, 2]],
   2: [[1, 2], [7, 2], [8, 2], [3, 2]],
@@ -54,6 +63,12 @@ const graph: Record<number, Node> = {
   22: [[18]],
 };
 
+/*
+  We can never stop on these positions (wrt the original map), so we can just
+  ignore them and treat them as edges of weight 2
+*/
+const MAP_GAPS = [2, 4, 6, 8];
+
 const TEMPLATE_A = `
 #############
 #.. . . . ..#
@@ -66,6 +81,8 @@ const TEMPLATE_B = `
 #############
 #.. . . . ..#
 ###.#.#.#.###
+  #.#.#.#.#
+  #.#.#.#.#
   #.#.#.#.#
   #########
 `;
@@ -93,6 +110,57 @@ const PART_B_ADDITIONS = `
 #D#B#A#C#
 `;
 
+const A_TARGET_ROW = 11;
+const B_TARGET_ROW = 19;
+
+const LETTERS = { A: true, B: true, C: true, D: true };
+const LETTER_COSTS = { A: 1, B: 10, C: 100, D: 1000 };
+const BASE_LETTER_TARGETS = { A: 11, B: 12, C: 13, D: 14 };
+const LETTER_HOME_MODS = { A: 0, B: 1, C: 2, D: 3 };
+
+const getCost = (letter: Letter, baseCost: number): number => baseCost * LETTER_COSTS[letter];
+const isOwnRoom = (c: Letter, p: number) => (p - 7) % 4 === LETTER_HOME_MODS[c];
+const isInHallway = (l: PositionLetter): boolean => l[0] < 7;
+
+const isHome = (l: PositionLetter, strState: string, isB = false): boolean => {
+  const p = l[0];
+  const c = l[1];
+  if (!isOwnRoom(c, p)) { return false; }
+
+  if (p >= (isB ? B_TARGET_ROW : A_TARGET_ROW)) { return true; }
+  if (strState[p + 4] === c) { return true; }
+
+  return false;
+};
+
+const isStuckInRoom = (p: number, strState: string): boolean => {
+  if (p < 11) { return false; }
+  return strState[p - 4] !== '.';
+};
+
+const encodeState = (state: DecodedState) => {
+  const arr = new Array(23).fill('.');
+
+  for (let i = 0; i < state.length; i += 1) {
+    arr[state[i][0]] = state[i][1];
+  }
+
+  return arr.join('');
+};
+
+const updateState = (strState: string, from: number, to: number): string => {
+  const out = [];
+  for (let i = 0; i < strState.length; i += 1) {
+    out.push((
+      i === from ? '.'
+        : i === to ? strState[from]
+          : strState[i]
+    ));
+  }
+  return out.join('');
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const print = (state: string, isB = false) => {
   const chars = (isB ? TEMPLATE_B : TEMPLATE_A).trim().split('');
 
@@ -107,16 +175,6 @@ const print = (state: string, isB = false) => {
   log(chars.join(''));
 };
 
-const BASE_LETTER_TARGETS = { A: 11, B: 12, C: 13, D: 14 };
-const HOME_MODS = { A: 0, B: 1, C: 2, D: 3 };
-const isOwnRoom = (c: Letter, p: number) => (p - 7) % 4 === HOME_MODS[c];
-
-const LETTER_COSTS = { A: 1, B: 10, C: 100, D: 1000 };
-const getCost = (letter: Letter, baseCost: number): number => baseCost * LETTER_COSTS[letter];
-
-// [pos, cumulative cost][]
-type PathCost = [number, number][];
-
 /*
   {
     [from]: {
@@ -126,9 +184,7 @@ type PathCost = [number, number][];
 */
 const cachedPaths: Record<number, Record<number, PathCost>> = {};
 const findShortestPath = (s: number, t: number, c: Letter): PathCost => {
-  // log(`finding shortest path from ${s} to ${t}`);
   if (cachedPaths[s]?.[t]) {
-    // log(`  got ${cachedPaths[s][t].map((step) => step[0]).join(' -> ')} (cached)`);
     return cachedPaths[s][t];
   }
 
@@ -139,13 +195,10 @@ const findShortestPath = (s: number, t: number, c: Letter): PathCost => {
   while (toCheck.length) {
     // TODO: Check sort direction
     const cur = toCheck.sort((l, r) => r[r.length - 1][1] - l[l.length - 1][1]).pop()!;
-    // log(`cur: ${inspect(cur)}`);
     const pos = cur[cur.length - 1][0];
     const cost = cur[cur.length - 1][1];
 
     const edges = graph[pos];
-
-    // log(`  edges: ${inspect(edges)}`);
 
     for (let i = 0; i < edges.length; i += 1) {
       const e = edges[i];
@@ -162,8 +215,6 @@ const findShortestPath = (s: number, t: number, c: Letter): PathCost => {
 
       const next: PathCost = [...cur, [eTarget, cost + (e[1] ?? 1)]];
 
-      // log(`  cur: ${inspect(cur)}\n  nxt: ${inspect(next)}`);
-
       if (!cachedPaths[s][eTarget]) {
         cachedPaths[s][eTarget] = next;
       }
@@ -175,75 +226,10 @@ const findShortestPath = (s: number, t: number, c: Letter): PathCost => {
     }
   }
 
-  // log(`  got ${cachedPaths[s][t].map((step) => step[0]).join(' -> ')}`);
-
   return cachedPaths[s][t];
 };
 
-const FIRST_LETTER_START = 7;
-
-const A_TARGET_ROW = 11;
-const B_TARGET_ROW = 19;
-
-export const encodeState = (state: State) => {
-  const arr = new Array(23).fill('.');
-
-  for (let i = 0; i < state.length; i += 1) {
-    arr[state[i][0]] = state[i][1];
-  }
-
-  return arr.join('');
-};
-
-const decodeState = (state: string): State => {
-  const out: PositionLetter[] = [];
-
-  for (let i = 0; i < state.length; i += 1) {
-    const c = state[i];
-    if (c in LETTERS) {
-      out.push([i, c as Letter]);
-    }
-  }
-
-  return out;
-};
-
-const updateState = (state: State, from: PositionLetter, to: PositionLetter): State => {
-  const out = state.slice();
-
-  const i = state.indexOf(from);
-  out[i] = to;
-
-  return out;
-};
-
-const isInHallway = (l: PositionLetter): boolean => l[0] < 7;
-
-const isHome = (l: PositionLetter, state: State, stringState: string, isB = false): boolean => {
-  const p = l[0];
-  const c = l[1];
-  if (!isOwnRoom(c, p)) { return false; }
-
-  if (p >= (isB ? B_TARGET_ROW : A_TARGET_ROW)) { return true; }
-  if (stringState[p + 4] === c) { return true; }
-
-  return false;
-};
-
-const isStuckInRoom = (p: number, cur: string): boolean => {
-  if (p < 11) { return false; }
-  return cur[p - 4] !== '.';
-};
-
-type StateCosts = Record<string, number>;
-type StateTree = Record<string, string[]>;
-
-/*
-  ##############...........####B#C#B#D####A#D#C#A##########
-  .. . . . ..BCBDADCA
-*/
-const graphGaps = [2, 4, 6, 8];
-export const parseInput = (input: string, addB = false): [string, StateCosts, StateTree] => {
+export const parseInput = (input: string, addB = false): string => {
   const lines = split(input);
   if (addB) {
     lines.splice(3, 0, PART_B_ADDITIONS);
@@ -251,83 +237,63 @@ export const parseInput = (input: string, addB = false): [string, StateCosts, St
 
   const transformed = lines.join('\n');
 
-  if (addB) {
-    dir({ input, transformed });
-  }
   const stripped = transformed.replace(/(?:#|\n|\s+)/g, '').split('');
-  for (let i = graphGaps.length - 1; i >= 0; i -= 1) {
-    if (stripped[graphGaps[i]] === '.') {
-      stripped.splice(graphGaps[i], 1);
+  for (let i = MAP_GAPS.length - 1; i >= 0; i -= 1) {
+    if (stripped[MAP_GAPS[i]] === '.') {
+      stripped.splice(MAP_GAPS[i], 1);
     }
   }
 
-  const initialPositions: State = [];
+  const initialPositions: DecodedState = [];
 
-  // let currentLetterPos = FIRST_LETTER_START;
   for (let i = 0; i < stripped.length; i += 1) {
     const c = stripped[i];
 
     if (c in LETTERS) {
       initialPositions.push([i, c as Letter]);
-      // currentLetterPos += 1;
     }
   }
 
-  const stateCosts: StateCosts= {};
-  const initialState = encodeState(initialPositions);
-  stateCosts[initialState] = 0;
-
-  const stateTree: StateTree = {};
-  return [initialState, stateCosts, stateTree];
+  return encodeState(initialPositions);
 };
 
 export const searchStep = (
-  cur: string,
-  toCheck: string[],
-  stateCosts: StateCosts,
-  stateTree: StateTree,
+  cur: StateNode,
+  toCheck: FibonacciHeap<number, string>,
+  stateNodes: StateNodes,
   isB: boolean,
 ) => {
-  stateTree[cur] = [];
-  // log(`\n\n${cur} @ cost ${stateCosts[cur]}`);
-  const state = decodeState(cur);
+  const letters: PositionLetter[] = [];
+  const byPosition: Record<number, Letter> = {};
+  for (let i = 0; i < cur.value.length; i += 1) {
+    const c = cur.value[i];
+    if (c in LETTERS) {
+      byPosition[i] = c as Letter;
+      letters.push([i, c as Letter]);
+    }
+  }
 
-  // log(`${cur} = $${stateCosts[cur]}, (${toCheck.length} to check)`);
-  // print(cur);
-
-  const byPosition = state.reduce((acc, v) => {
-    acc[v[0]] = v[1];
-    return acc;
-  }, {} as Record<number, string>);
-
-  // dir({ byPosition});
-
-  let toPush: [State, number][] = [];
+  let toPush: [string, number][] = [];
 
   moveLoop:
-  for (let i = 0; i < state.length; i += 1) {
-    const l = state[i];
+  for (let i = 0; i < letters.length; i += 1) {
+    const l = letters[i];
 
-    if (isHome(l, state, cur, isB)) {
+    if (isHome(l, cur.value, isB)) {
       continue;
     }
 
     if (isInHallway(l)) {
-      // log(`${l[1]} @ ${l[0]} is in the hallway`);
       // See if we can go home
       const pathHome = findShortestPath(l[0], BASE_LETTER_TARGETS[l[1]] + (isB ? 8 : 0), l[1]);
-      // log(` path home for ${l[1]} @ ${l[0]}: ${pathHome.map((p) => p[0]).join(' -> ')}`);
       let lastEmptyIndex!: number;
       let friendsStartAt;
       for (let j = 1; j < pathHome.length; j += 1) {
         const pathNode = pathHome[j];
         const existing = byPosition[pathNode[0]];
-        // log(`  @ ${pathNode[0]}, existing? ${existing}`);
         if (existing) {
           if (existing === l[1]) {
             friendsStartAt = j;
-          } else {
-            // log(`  blocked by ${existing} @ ${pathNode[0]}`);
           }
           break;
         } else {
@@ -339,6 +305,7 @@ export const searchStep = (
 
       if (lastEmptyIndex === pathHome.length - 1) {
         homePos = pathHome[pathHome.length - 1];
+      // If the rest of the path is all friends, go to the last empty space
       } else if (friendsStartAt) {
         let allFriends = true;
         for (let j = friendsStartAt + 1; j < pathHome.length; j += 1) {
@@ -352,155 +319,94 @@ export const searchStep = (
         }
 
         if (allFriends) {
-          // log(`  home is full of friends, going to ${pathHome[lastEmptyIndex]}`);
           homePos = pathHome[lastEmptyIndex];
         }
       }
 
-      // If we can, abort this loop; this is the only move to make from this state
+      // If we can go home, abort this loop; this is the only allowable move
       if (homePos) {
-        // log(`  not blocked`);
-        const next = updateState(state, l, [homePos[0], l[1]]);
-        // const encoded = encodeState(next);
-
-        // if (!stateCosts[encoded]) {
+        const next = updateState(cur.value, l[0], homePos[0]);
         const addedCost = getCost(l[1], homePos[1]);
-        // stateCosts[encoded] = stateCosts[cur] + addedCost;
-        // log(`\n  adding ${encodeState(next)}\n  ${l[1]} from ${l[0]} -> ${homePos[0]} (hall -> home)\n    addedCost ${addedCost} = ${stateCosts[cur] + addedCost}\n    ${inspect(pathHome)}`);
-        // toPush.push([next, addedCost]);
         toPush = [[next, addedCost]];
-        // log(`  * move to home is the only allowable move *`);
         // eslint-disable-next-line no-extra-label
         break moveLoop;
-        // }
       }
-    } else if (isStuckInRoom(l[0], cur)) {
-      // log(`${l[1]} @ ${l[0]} is stuck in room`);
     // See if we can leave the room; find + check paths to all six hallway positions
-    } else if (!isStuckInRoom(l[0], cur)) {
-      // log(`${l[1]} @ ${l[0]} is in room, can move`);
+    } else if (!isStuckInRoom(l[0], cur.value)) {
       for (let t = 0; t <= 6; t += 1) {
-        // log(`  finding path to ${t}`);
         const path = findShortestPath(l[0], t, l[1]);
 
         if (!path) {
           throw new Error(`No valid path for ${l[1]} from ${l[0]} to ${t}`);
         }
 
-        // log(` path for ${l[1]} @ ${l[0]} to ${t}: ${path.map((p) => p[0]).join(' -> ')}`);
-
         let blocked = false;
         for (let j = 1; j < path.length; j += 1) {
           const pathNode = path[j];
-          // log(`    ${pathNode}`);
           const existing = byPosition[pathNode[0]];
 
           if (existing) {
-            // log(`  blocked by ${existing} @ ${pathNode[0]}`);
             blocked = true;
             break;
           }
         }
 
         if (!blocked) {
-          const next = updateState(state, l, [t, l[1]]);
+          const next = updateState(cur.value, l[0], t);
           const addedCost = getCost(l[1], path[path.length - 1][1]);
-          // log(`\n  adding ${encodeState(next)}\n  ${l[1]} from ${l[0]} -> ${t} (room -> hall)\n    addedCost ${addedCost} = ${stateCosts[cur] + addedCost}\n    ${inspect(path)}`);
           toPush.push([next, addedCost]);
         }
       }
     }
   }
 
-  // log(`  ${toPush.length} to push into queue`);
   for (let i = 0; i < toPush.length; i += 1) {
-    const str = encodeState(toPush[i][0]);
+    const str = toPush[i][0];
+    const cost = cur.key + toPush[i][1];
 
-    // log(`pushing ${str}`);
-    if (stateCosts[str] === undefined) {
-      toCheck.push(str);
+    if (stateNodes[str] === undefined) {
+      stateNodes[str] = toCheck.insert(cost, str) as StateNode;
+    } else if (cost < stateNodes[str].key) {
+      toCheck.decreaseKey(stateNodes[str], cost);
     }
-
-    const cost = stateCosts[cur] + toPush[i][1];
-    // log(`  pushing ${str}: ${stateCosts[cur]} + ${toPush[i][1]} = ${cost}`);
-    stateCosts[str] = Math.min(cost, stateCosts[str] || Number.MAX_SAFE_INTEGER);
-    stateTree[cur].push(str);
   }
 
   return null;
 };
 
-const getSolutionSteps = (stateCosts: StateCosts, stateTree: StateTree, initialState: string, targetState: string): string[] => {
-  const treeEntries = Object.entries(stateTree);
-  const out = [];
-
-  let cur = targetState;
-
-  while (cur) {
-    out.unshift(cur);
-
-    const possible = treeEntries.reduce((acc, next) => {
-      if (next[1].includes(cur)) {
-        acc.push(next[0]);
-      }
-      return acc;
-    }, [] as string[]);
-
-    possible.sort((l, r) => stateCosts[l] - stateCosts[r]);
-
-    cur = possible[0];
-  }
-
-  return out;
-};
-
 const solve = (input: string, isB = false): number => {
-  const [initialState, stateCosts, stateTree] = parseInput(input, isB);
+  const initialState = parseInput(input, isB);
+  const targetState = parseInput(isB ? TARGET_STATE_B : TARGET_STATE_A);
 
-  const [targetState] = parseInput(isB ? TARGET_STATE_B : TARGET_STATE_A);
+  const toCheck: FibonacciHeap<number, string> = new FibonacciHeap();
 
-  // dir(initialState);
+  const nodesByState: StateNodes = {};
+  nodesByState[initialState] = toCheck.insert(0, initialState) as StateNode;
 
-  print(initialState, isB);
+  let solved;
+  while (!toCheck.isEmpty()) {
+    circuitBreaker(100000);
 
-  let solvedState;
-  const toCheck = [initialState];
-  while (toCheck.length) {
-    // log('\n');
-    // counter('iter', true);
-    circuitBreaker(150000, () => {
-      const costs = Object.entries(stateCosts);
-      costs.sort((l, r) => l[1] - r[1]);
-      log(`circuit breaker tripped:\n#stateCosts = ${costs.length}\n max cost = ${costs[costs.length - 1]}\nnext cost = ${costs[0]}`);
-    });
+    const cur = toCheck.extractMinimum() as StateNode;
 
-    // TODO: Priority queue, check sort order
-    toCheck.sort((l, r) => stateCosts[r] - stateCosts[l]);
-    // dir(toCheck.slice(-4).map((s) => `${s} -> $${stateCosts[s]}`));
-    const cur = toCheck.pop()!;
-
-    if (cur === targetState) {
-      solvedState = cur;
+    if (cur.value === targetState) {
+      solved = cur;
       break;
     }
 
-    if (stateCosts[cur] > (isB ? 80000 : 15000)) {
+    if (cur.key > (isB ? 80000 : 20000)) {
       throw new Error('Cost is too high');
     }
 
-    searchStep(cur, toCheck, stateCosts, stateTree, isB);
+    searchStep(cur, toCheck, nodesByState, isB);
   }
 
-  if (!solvedState) {
+  if (!solved) {
     throw new Error('Could not solve');
   }
 
-  // const solutionSteps = getSolutionSteps(stateCosts, stateTree, initialState, targetState);
-  // dir({ solvedState, solutionSteps });
-
-  return stateCosts[solvedState];
+  return solved.key;
 };
 
 export const a = (input: string): number => solve(input);
-
 export const b = (input: string): number => solve(input, true);
