@@ -1,3 +1,4 @@
+import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { a, b } from '.';
 
@@ -7,7 +8,7 @@ const input = loadText('input.txt');
 
 const example = '\n.#.\n..#\n###\n';
 
-describe(`Day ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
+describeDay(title, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([

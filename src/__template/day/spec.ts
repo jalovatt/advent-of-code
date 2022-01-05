@@ -1,3 +1,4 @@
+import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { a, b } from '.';
 
@@ -13,7 +14,7 @@ const example2 = `
 1
 `;
 
-describe(`${__dirname.match(/\/([^/]+)\/([^/]+)$/)!.slice(1).join(' - ')} - ${title}`, () => {
+describeDay(title, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
