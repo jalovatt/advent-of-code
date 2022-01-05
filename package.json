@@ -8,7 +8,7 @@
     "test": "jest --verbose",
     "test:silent": "jest",
     "lint": "eslint --ext .js,.ts .",
-    "day": "bash ./init-day.sh $0"
+    "day": "node ./init-day.js"
   },
   "dependencies": {
     "@babel/core": "^7.16.0",

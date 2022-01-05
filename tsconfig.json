@@ -6,6 +6,6 @@
       "@lib/*": ["./src/lib/*"]
     }
   },
-  "include": ["src/**/*", ".eslintrc.js"],
+  "include": ["src/**/*", ".eslintrc.js", "jest.config.js", "init-day.js"],
   "exclude": ["node_modules"],
 }
