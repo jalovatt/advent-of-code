@@ -1,4 +1,4 @@
-import { split } from '../../utilities/processing';
+import { split } from '@lib/processing';
 
 type BinaryChar = '0' | '1';
 type BinaryCounts = {

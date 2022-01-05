@@ -1,4 +1,4 @@
-import loadText from '../../utilities/loadText';
+import loadText from '@lib/loadText';
 import { a, b } from '.';
 
 const title = 'Trick Shot';

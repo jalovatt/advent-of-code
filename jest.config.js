@@ -13,5 +13,8 @@ module.exports = {
     'js',
     'ts',
     'txt',
-  ]
+  ],
+  moduleNameMapper: {
+    '^@lib/(.*)': '<rootDir>/src/lib/$1',
+  },
 };

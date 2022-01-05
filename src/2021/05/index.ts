@@ -1,4 +1,4 @@
-import { split } from '../../utilities/processing';
+import { split } from '@lib/processing';
 
 const findOverlaps = (input: string, includeDiagonals = false): number => {
   const segments = split(input).map((line) => {

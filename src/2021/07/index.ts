@@ -1,4 +1,4 @@
-import { splitToNumber } from '../../utilities/processing';
+import { splitToNumber } from '@lib/processing';
 import { selectMedian } from './median';
 
 const nthTriangularNumber = (n: number) => (n * (n + 1)) / 2;

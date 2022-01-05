@@ -1,8 +1,8 @@
 import { FibonacciHeap } from '@tyriar/fibonacci-heap';
 import type { INode } from '@tyriar/fibonacci-heap';
-import circuitBreaker from '../../utilities/circuitBreaker';
-import { log } from '../../utilities/logging';
-import { split } from '../../utilities/processing';
+import circuitBreaker from '@lib/circuitBreaker';
+import { log } from '@lib/logging';
+import { split } from '@lib/processing';
 
 type Letter = 'A' | 'B' | 'C' | 'D';
 type PositionLetter = [number, Letter];

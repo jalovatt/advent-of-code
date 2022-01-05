@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import { split } from '../../utilities/processing';
+import { split } from '@lib/processing';
 
 export const ring = (n: number, l: number) => ((n - 1) % l) + 1;
 

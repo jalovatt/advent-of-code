@@ -1,5 +1,3 @@
-import { log } from '../../utilities/logging';
-
 type TargetBounds = {
   xMin: number
   xMax: number
@@ -112,7 +110,6 @@ const findSolutions = (input: string): ShotResult[] => {
   }
 
   const solutions = [];
-  // let count = 0;
   for (const vx of vxValid) {
     for (const vy of vyValidSet) {
       let x = 0;
@@ -145,9 +142,6 @@ const findSolutions = (input: string): ShotResult[] => {
       }
     }
   }
-
-  // log(`hit ${solutions.length} of ${count}`);
-  // log(`naive would have used ${vxMax - vxMin} * ${150 - bounds.yMin} = ${(vxMax - vxMin) * (100 - bounds.yMin)} tries`);
 
   return solutions;
 };

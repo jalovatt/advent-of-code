@@ -1,6 +1,6 @@
 /* eslint-disable guard-for-in */
-import { split } from '../../utilities/processing';
-import runTimes from '../../utilities/runTimes';
+import { split } from '@lib/processing';
+import runTimes from '@lib/runTimes';
 
 type NestedRecord<T> = Record<string, Record<string, T>>;
 type Rules = NestedRecord<string>;

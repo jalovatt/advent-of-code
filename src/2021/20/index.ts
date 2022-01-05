@@ -1,4 +1,4 @@
-import { split } from '../../utilities/processing';
+import { split } from '@lib/processing';
 
 type Binary = 1 | 0;
 type Field = Record<string, Binary>;

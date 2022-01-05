@@ -1,4 +1,4 @@
-import { split, splitToNumber } from '../../utilities/processing';
+import { split, splitToNumber } from '@lib/processing';
 
 type Coord = [number, number];
 type Fold = ['x' | 'y', number];

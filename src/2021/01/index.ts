@@ -1,4 +1,4 @@
-import { splitToNumber } from '../../utilities/processing';
+import { splitToNumber } from '@lib/processing';
 
 export const a = (input: string) => {
   const arr = splitToNumber(input);

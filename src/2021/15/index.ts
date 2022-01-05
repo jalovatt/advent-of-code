@@ -1,7 +1,7 @@
 /* eslint-disable no-labels */
-import circuitBreaker from '../../utilities/circuitBreaker';
-import { log } from '../../utilities/logging';
-import { split, splitToNumber } from '../../utilities/processing';
+import circuitBreaker from '@lib/circuitBreaker';
+import { log } from '@lib/logging';
+import { split, splitToNumber } from '@lib/processing';
 import { BucketQueue } from './BucketQueue';
 
 type Coord = [number, number];

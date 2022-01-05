@@ -1,4 +1,4 @@
-import { split, splitToNumber } from '../../utilities/processing';
+import { split, splitToNumber } from '@lib/processing';
 
 type Cell = { x: number, y: number, v: number };
 type Field = number[][];

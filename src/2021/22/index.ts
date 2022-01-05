@@ -3,7 +3,7 @@
   for a bunch of 3D math where I had the right idea on paper but no idea how to
   turn it into algebra
 */
-import { split } from '../../utilities/processing';
+import { split } from '@lib/processing';
 
 type Maybe<T> = T | null | undefined;
 

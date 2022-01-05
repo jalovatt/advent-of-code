@@ -1,4 +1,4 @@
-import { split as splitInput } from '../../utilities/processing';
+import { split as splitInput } from '@lib/processing';
 
 const Digits = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
 

@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
-import { split } from '../../utilities/processing';
-import circuitBreaker from '../../utilities/circuitBreaker';
+import { split } from '@lib/processing';
+import circuitBreaker from '@lib/circuitBreaker';
 
 class Node {
   value: string;

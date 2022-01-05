@@ -1,6 +1,6 @@
-import { split, splitToNumber } from '../../utilities/processing';
-import { Simulator2D } from '../../utilities/Simulator';
-import type { Field2D, Cell2D } from '../../utilities/Simulator';
+import { split, splitToNumber } from '@lib/processing';
+import { Simulator2D } from '@lib/Simulator';
+import type { Field2D, Cell2D } from '@lib/Simulator';
 
 type Octopus = Cell2D<number>;
 

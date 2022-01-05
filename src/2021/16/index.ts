@@ -1,4 +1,4 @@
-import { dir, log } from '../../utilities/logging';
+import { dir, log } from '@lib/logging';
 
 const packetTypes: Record<number, { name: string, resolver: (values: number[]) => number }> = {
   0: {

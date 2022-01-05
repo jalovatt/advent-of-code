@@ -1,7 +1,7 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-bitwise */
-import { dir } from '../../utilities/logging';
-import { split } from '../../utilities/processing';
+import { dir } from '@lib/logging';
+import { split } from '@lib/processing';
 
 type Maybe<T> = T | null;
 type MemAddress = 'w' | 'x' | 'y' | 'z';

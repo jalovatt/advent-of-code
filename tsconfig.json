@@ -2,6 +2,9 @@
   "extends": "@tsconfig/recommended",
   "compilerOptions": {
     "noImplicitAny": true,
+    "paths": {
+      "@lib/*": ["./src/lib/*"]
+    }
   },
   "include": ["src/**/*", ".eslintrc.js"],
   "exclude": ["node_modules"],

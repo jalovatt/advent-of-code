@@ -18,8 +18,8 @@ b    .  b    .  .    c  b    c  b    c
  gggg    gggg    ....    gggg    gggg
 */
 
-import { split } from '../../utilities/processing';
-import circuitBreaker from '../../utilities/circuitBreaker';
+import { split } from '@lib/processing';
+import circuitBreaker from '@lib/circuitBreaker';
 
 // An object of { [key: K]: V } but it can be created empty with no fuss
 type DynamicRecord<K extends string | number, V> = Partial<{ [key in K]: V }>;

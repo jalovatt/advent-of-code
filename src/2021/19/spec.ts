@@ -1,8 +1,8 @@
-import loadText from '../../utilities/loadText';
+import loadText from '@lib/loadText';
+import { split } from '@lib/processing';
+import { dir, log } from '@lib/logging';
 import { a, b, determinant, subtraction } from '.';
 import rotations from './rotations';
-import { split } from '../../utilities/processing';
-import { dir, log } from '../../utilities/logging';
 
 const title = 'No title yet';
 

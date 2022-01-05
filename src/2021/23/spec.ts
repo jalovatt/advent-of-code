@@ -1,5 +1,5 @@
 import { FibonacciHeap } from '@tyriar/fibonacci-heap';
-import loadText from '../../utilities/loadText';
+import loadText from '@lib/loadText';
 import { a, b, parseInput, searchStep } from './index';
 import type { StateNode, StateNodes } from './index';
 

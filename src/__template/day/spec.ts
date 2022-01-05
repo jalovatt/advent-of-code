@@ -1,4 +1,4 @@
-import loadText from '../utilities/loadText';
+import loadText from '@lib/loadText';
 import { a, b } from '.';
 
 const title = 'No title yet';
@@ -13,7 +13,7 @@ const example2 = `
 1
 `;
 
-describe(`${__dirname.match(/\/(.+)$/)![1]} - ${__filename.match(/\/([^/]+)\/spec/)?.[1]} - ${title}`, () => {
+describe(`${__dirname.match(/\/([^/]+)\/([^/]+)$/)!.slice(1).join(' - ')} - ${title}`, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([

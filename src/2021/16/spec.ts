@@ -1,4 +1,4 @@
-import loadText from '../../utilities/loadText';
+import loadText from '@lib/loadText';
 import { testParsing, a, b } from '.';
 
 const title = 'Packet Decoder';

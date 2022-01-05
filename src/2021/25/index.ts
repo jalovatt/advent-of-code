@@ -1,7 +1,7 @@
 /* eslint-disable no-bitwise */
-import circuitBreaker from '../../utilities/circuitBreaker';
-import { log } from '../../utilities/logging';
-import { split } from '../../utilities/processing';
+import circuitBreaker from '@lib/circuitBreaker';
+import { log } from '@lib/logging';
+import { split } from '@lib/processing';
 
 const ECuke = '>';
 const SCuke = 'v';

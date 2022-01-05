@@ -1,7 +1,7 @@
 /* eslint-disable no-labels */
-import circuitBreaker from '../../utilities/circuitBreaker';
-import { dir } from '../../utilities/logging';
-import { split } from '../../utilities/processing';
+import circuitBreaker from '@lib/circuitBreaker';
+import { dir } from '@lib/logging';
+import { split } from '@lib/processing';
 import rotations, { Rotation } from './rotations';
 
 type Vec3 = { x: number, y: number, z: number };
