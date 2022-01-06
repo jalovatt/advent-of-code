@@ -1,54 +1,51 @@
 import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
-import { part1, part2 } from '.';
+import { a, b } from '.';
 
-const title = 'No title yet';
+const title = 'Not Quite Lisp';
 
 const input = loadText('input.txt');
-
-const example1 = `
-1
-`;
-
-const example2 = `
-1
-`;
 
 describeDay(title, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        [example1, 2],
+        ['(())', 0],
+        ['(()(()(', 3],
+        ['))(((((', 3],
+        ['))(', -1],
+        [')())())', -3],
       ])('%p => %p', (given, expected) => {
-        expect(part1(given)).toEqual(expected);
+        expect(a(given)).toEqual(expected);
       });
     });
 
-    xdescribe('Solution', () => {
-      const knownSolution = null;
+    describe('Solution', () => {
+      const knownSolution = 138;
 
       test(`${knownSolution}`, () => {
-        const solution = part1(input);
+        const solution = a(input);
 
         expect(solution).toEqual(knownSolution);
       });
     });
   });
 
-  xdescribe('Part 2', () => {
+  describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        [example2, 2],
+        [')', 1],
+        ['()())', 5],
       ])('%p => %p', (given, expected) => {
-        expect(part2(given)).toEqual(expected);
+        expect(b(given)).toEqual(expected);
       });
     });
 
-    xdescribe('Solution', () => {
-      const knownSolution = null;
+    describe('Solution', () => {
+      const knownSolution = 1771;
 
       test(`${knownSolution}`, () => {
-        const solution = part2(input);
+        const solution = b(input);
 
         expect(solution).toEqual(knownSolution);
       });

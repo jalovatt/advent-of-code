@@ -35,7 +35,7 @@ fs.mkdirSync(dayPath, { recursive: true });
 childProcess.execSync(`cp -R ${templatePath}/* ${dayPath}`);
 
 const cmd = (process.platform === 'darwin' ? 'open' : 'xdg-open');
-const dayUrl = `https://adventofcode.com/${year}/day/${day}`;
+const dayUrl = `https://adventofcode.com/${year}/day/${parseInt(day, 10)}`;
 childProcess.exec(`${cmd} ${dayUrl}`);
 childProcess.exec(`${cmd} ${dayUrl}/input`);
 
