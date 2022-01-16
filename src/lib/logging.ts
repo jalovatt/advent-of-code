@@ -1,5 +1,5 @@
 import { performance } from 'perf_hooks';
-import util from 'util';
+import util, { InspectOptions } from 'util';
 
 const timers: Record<string, number> = {};
 const counters: Record<string, number> = {};
@@ -16,9 +16,11 @@ export const log = (...args: any) => {
   process.stdout.write('\n');
 };
 
-export const inspect = (obj: any, options = {}) => util.inspect(obj, options);
+export const inspect = (obj: any, options: InspectOptions = {}) => (
+  util.inspect(obj, options)
+);
 
-export const dir = (obj: any, options = {}) => {
+export const dir = (obj: any, options: InspectOptions = {}) => {
   process.stdout.write(`${inspect(obj, options)}\n`);
 };
 
