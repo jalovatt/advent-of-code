@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-escape */
 import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { getEscapedCount, getNetCount, part1, part2 } from '.';

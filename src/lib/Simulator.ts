@@ -19,6 +19,8 @@
 */
 
 // eslint-disable-next-line max-classes-per-file
+import { log } from './logging';
+
 interface Cell<T> { value: T }
 export interface Cell2D<T> extends Cell<T> { x: number, y: number }
 export interface Cell3D<T> extends Cell2D<T> { z: number }
@@ -122,8 +124,7 @@ export class Simulator2D<T> {
 
   // eslint-disable-next-line class-methods-use-this
   update() {
-    // eslint-disable-next-line no-console
-    console.log('Update has not been implemented');
+    throw new Error('Update has not been implemented');
   }
 
   run(times = 1) {
@@ -139,8 +140,7 @@ export class Simulator2D<T> {
       )).join(' ')
     )).join('\n');
 
-    // eslint-disable-next-line no-console
-    console.log(str);
+    log(str);
   }
 }
 
@@ -176,8 +176,7 @@ export class Simulator3D<T> {
 
   // eslint-disable-next-line class-methods-use-this
   update() {
-    // eslint-disable-next-line no-console
-    console.log('Update has not been implemented');
+    throw new Error('Update has not been implemented');
   }
 
   run(times = 1) {
@@ -201,7 +200,6 @@ export class Simulator3D<T> {
       out.push(`[${i}]:\n${plane}`);
     });
 
-    // eslint-disable-next-line no-console
-    console.log(out.join('\n\n'));
+    log(out.join('\n\n'));
   }
 }

@@ -1,4 +1,3 @@
-/* eslint-disable object-curly-newline */
 import loadText from '@lib/loadText';
 import { a, b, decodeState, encodeState, ring } from '.';
 

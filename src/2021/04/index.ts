@@ -1,3 +1,5 @@
+import { log } from '@lib/logging';
+
 const WIDTH = 5;
 
 type BingoCell = { value: string, marked: boolean };
@@ -82,8 +84,7 @@ class Bingo {
       }).join(' ')
     )).join('\n');
 
-    // eslint-disable-next-line no-console
-    console.log(pretty);
+    log(pretty);
   }
 }
 

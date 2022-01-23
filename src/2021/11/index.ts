@@ -19,7 +19,6 @@ class Octopuses extends Simulator2D<number> {
     const toFlash: Octopus[] = [];
 
     this.iterate((octo: Octopus) => {
-      // eslint-disable-next-line no-param-reassign
       octo.value += 1;
 
       if (octo.value > 9) {
@@ -37,7 +36,6 @@ class Octopuses extends Simulator2D<number> {
       const next = toFlash.pop()!;
 
       this.iterateNeighbours(next, (octo: Octopus) => {
-        // eslint-disable-next-line no-param-reassign
         octo.value += 1;
 
         if (octo.value > 9 && !flashed.has(octo)) {
@@ -52,7 +50,6 @@ class Octopuses extends Simulator2D<number> {
 
   // eslint-disable-next-line class-methods-use-this
   reset(flashed: Octopus[]) {
-    // eslint-disable-next-line no-param-reassign
     flashed.forEach((octo) => { octo.value = 0; });
   }
 

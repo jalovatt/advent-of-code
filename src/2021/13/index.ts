@@ -1,3 +1,4 @@
+import { log } from '@lib/logging';
 import { split, splitToNumber } from '@lib/processing';
 
 type Coord = [number, number];
@@ -81,8 +82,7 @@ const countMarked = (arr: DotGrid) => {
 const print = (arr: DotGrid) => {
   const str = arr.map((row) => row.map((v) => (v ? FILLED : EMPTY)).join('')).join('\n');
 
-  // eslint-disable-next-line no-console
-  console.log(str);
+  log(str);
 };
 
 const processInput = (input: string): [Coord[], Fold[]] => {

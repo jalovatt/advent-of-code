@@ -1,5 +1,3 @@
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-bitwise */
 import { dir } from '@lib/logging';
 import { split } from '@lib/processing';
 
@@ -27,7 +25,6 @@ const parseInstructions = (input: string): Instruction[] => split(input)
   .filter(Boolean) as Instruction[];
 
 const compute = (instructions: Instruction[], args: number[] = []) => {
-  // eslint-disable-next-line object-curly-newline
   const mem = { w: 0, x: 0, y: 0, z: 0 };
 
   let argIndex = 0;

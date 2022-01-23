@@ -125,7 +125,6 @@ class Packet {
       ? () => this.children.length < this.subPacketsCount!
       : () => consumedBits < this.subPacketsLength!;
 
-    // eslint-disable-next-line prefer-destructuring
     let remaining = this.remaining;
     while (remaining && parseInt(remaining, 2) > 0 && typeCondition()) {
       const child = new Packet(remaining, true);

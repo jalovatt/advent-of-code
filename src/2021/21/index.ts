@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import { split } from '@lib/processing';
 
 export const ring = (n: number, l: number) => ((n - 1) % l) + 1;
@@ -103,7 +102,6 @@ const prepareStateTree = (initialState: number, winningScore = 21): StateTree =>
 
   while (toVisit.length) {
     const cur = toVisit.pop()!;
-    // eslint-disable-next-line no-continue
     if (stateTree[cur]) { continue; }
 
     const state = decodeState(cur);
@@ -114,12 +112,10 @@ const prepareStateTree = (initialState: number, winningScore = 21): StateTree =>
       const v = ROLL_OUTCOMES[i][0];
       const count = ROLL_OUTCOMES[i][1];
 
-      /* eslint-disable prefer-destructuring */
       let p1p = state.p1p;
       let p2p = state.p2p;
       let p1s = state.p1s;
       let p2s = state.p2s;
-      /* eslint-enable prefer-destructuring */
 
       let nextState;
 

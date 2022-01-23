@@ -1,4 +1,3 @@
-/* eslint-disable no-labels */
 import CircuitBreaker from '@lib/CircuitBreaker';
 import { log } from '@lib/logging';
 import { split, splitToNumber } from '@lib/processing';
@@ -49,28 +48,23 @@ const tileField = (field: number[][], tiles: number) => {
 };
 
 const buildGraph = (field: (Node | number)[][]): [Node, Node] => {
-  // const graph = new Array(field.length).fill(null).map(() => new Array(field[0].length));
-
   for (let y = 0; y < field.length; y += 1) {
     for (let x = 0; x < field[0].length; x += 1) {
       let v: Node | number = field[y][x];
       if (typeof v === 'number') {
         v = new Node([y, x], v);
-        // eslint-disable-next-line no-param-reassign
         field[y][x] = v;
       }
 
       let vRight = field[y][x + 1];
       if (typeof vRight === 'number') {
         vRight = new Node([y, x + 1], vRight);
-        // eslint-disable-next-line no-param-reassign
         field[y][x + 1] = vRight;
       }
 
       let vDown = field[y + 1]?.[x];
       if (typeof vDown === 'number') {
         vDown = new Node([y + 1, x], vDown);
-        // eslint-disable-next-line no-param-reassign
         field[y + 1][x] = vDown;
       }
 

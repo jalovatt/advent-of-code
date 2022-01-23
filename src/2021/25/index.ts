@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import CircuitBreaker from '@lib/CircuitBreaker';
 import { log } from '@lib/logging';
 import { split } from '@lib/processing';
@@ -29,7 +28,6 @@ const prepareField = (input: string): [CucumberField, number, number] => {
     for (let x = 0; x < l.length; x += 1) {
       const c = l[x];
 
-      // eslint-disable-next-line no-continue
       if (c === '.') { continue; }
 
       field[encodeCoord(y, x)] = c as Cucumber;
@@ -63,7 +61,6 @@ export class CucumberSim {
         const coord = encodeCoord(y, x);
         const c = this.field[coord];
 
-        // eslint-disable-next-line no-continue
         if (!c) { continue; }
 
         if (c === SCuke) {
@@ -105,7 +102,6 @@ export class CucumberSim {
     let t = 0;
 
     const breaker = new CircuitBreaker(10000, (moved) => log(`t=${t}, ${moved} cucumbers moved`));
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const moved = this.step();
       t += 1;

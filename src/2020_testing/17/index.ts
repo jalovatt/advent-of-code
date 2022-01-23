@@ -1,7 +1,6 @@
 // This is Day 17 from 2020, just copied here as a test case for config changes, TS, etc.
 
 /* eslint-disable max-classes-per-file */
-/* eslint-disable no-param-reassign */
 /*
   Neightbours = 26 where the Manhattan distance is at most 1
     9 above

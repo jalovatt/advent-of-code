@@ -22,7 +22,6 @@ const WINDOW = [
 
   - y << 8 is a faster y * 255
 */
-// eslint-disable-next-line no-bitwise
 const getKey = (y: number, x: number) => (y << 8) + x;
 
 const getWindowValue = (y: number, x: number, field: Field, infiniteAreLit: boolean): number => {

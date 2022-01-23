@@ -21,7 +21,6 @@ class Node {
 
 const getObjWithDefaultNode = (): { [key: string]: Node } => (
   new Proxy({} as { [key: string]: Node }, {
-    // eslint-disable-next-line no-param-reassign
     get: (t, p: string) => { if (!t[p]) { t[p] = new Node(p); } return t[p]; },
   })
 );
