@@ -1,5 +1,5 @@
 /* eslint-disable no-labels */
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { dir } from '@lib/logging';
 import { split } from '@lib/processing';
 import rotations, { Rotation } from './rotations';
@@ -267,10 +267,9 @@ const registerScanners = (input: string) => {
 
   const knownScanners: Set<number> = new Set([0]);
 
+  const breaker = new CircuitBreaker(100, (obj) => dir(obj));
   while (correspondingToCheck.length) {
-    circuitBreaker(100, () => {
-      dir({ knownScanners, correspondingToCheck });
-    });
+    breaker.tick({ knownScanners, correspondingToCheck });
 
     const c = correspondingToCheck.shift()!;
     const lScanner = c[0][0][0];

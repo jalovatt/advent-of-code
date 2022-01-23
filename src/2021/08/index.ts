@@ -19,7 +19,7 @@ b    .  b    .  .    c  b    c  b    c
 */
 
 import { split } from '@lib/processing';
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 
 // An object of { [key: K]: V } but it can be created empty with no fuss
 type DynamicRecord<K extends string | number, V> = Partial<{ [key in K]: V }>;
@@ -74,6 +74,8 @@ const decodeEntry = ({ digits, output }: ProcessedEntry): number => {
     }
   });
 
+  const breaker = new CircuitBreaker(1000);
+
   while (known.count < 10) {
     digits.forEach((digit) => {
       if (known.digits.has(digit)) { return undefined; }
@@ -122,7 +124,7 @@ const decodeEntry = ({ digits, output }: ProcessedEntry): number => {
       return undefined;
     });
 
-    circuitBreaker(1000);
+    breaker.tick();
   }
 
   const valuesByString: { [key: string]: number } = {};

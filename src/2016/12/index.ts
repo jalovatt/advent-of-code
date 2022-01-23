@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { split } from '@lib/processing';
 
 type Register = 'a' | 'b' | 'c' | 'd';
@@ -41,8 +41,9 @@ const solve = (input: string, initC = 0): number => {
     return [op as Command, x, y];
   });
 
+  const breaker = new CircuitBreaker(100000000);
   while (mem.cursor < instructions.length) {
-    circuitBreaker(100000000);
+    breaker.tick();
     const cmd = instructions[mem.cursor];
     ops[cmd[0]](cmd[1], cmd[2]);
   }

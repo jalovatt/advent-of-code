@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { split } from '@lib/processing';
 import { FibonacciHeap, INode } from '@tyriar/fibonacci-heap';
 
@@ -113,8 +113,10 @@ export const part2 = (input: string): number => {
   const seen: SeenNodes = {};
   seen[start] = toCheck.insert(0, start) as SeenNode;
 
+  const breaker = new CircuitBreaker(100000);
+
   while (!toCheck.isEmpty()) {
-    circuitBreaker(100000);
+    breaker.tick();
 
     const cur = toCheck.extractMinimum() as SeenNode;
     const str = cur.value;

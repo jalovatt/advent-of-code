@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { log } from '@lib/logging';
 import { split } from '@lib/processing';
 
@@ -104,14 +104,14 @@ export class CucumberSim {
   runUntilStopped(): number {
     let t = 0;
 
+    const breaker = new CircuitBreaker(10000, (moved) => log(`t=${t}, ${moved} cucumbers moved`));
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const moved = this.step();
       t += 1;
       if (!moved) { break; }
 
-      // eslint-disable-next-line @typescript-eslint/no-loop-func
-      circuitBreaker(10000, () => log(`t=${t}, ${moved} cucumbers moved`));
+      breaker.tick(moved);
     }
 
     return t;

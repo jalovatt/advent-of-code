@@ -1,8 +1,8 @@
 import { FibonacciHeap } from '@tyriar/fibonacci-heap';
 import type { INode } from '@tyriar/fibonacci-heap';
-import circuitBreaker from '@lib/circuitBreaker';
 import { log } from '@lib/logging';
 import { split } from '@lib/processing';
+import CircuitBreaker from '@lib/CircuitBreaker';
 
 type Letter = 'A' | 'B' | 'C' | 'D';
 type PositionLetter = [number, Letter];
@@ -383,9 +383,10 @@ const solve = (input: string, isB = false): number => {
   const nodesByState: StateNodes = {};
   nodesByState[initialState] = toCheck.insert(0, initialState) as StateNode;
 
+  const breaker = new CircuitBreaker(100000);
   let solved;
   while (!toCheck.isEmpty()) {
-    circuitBreaker(100000);
+    breaker.tick();
 
     const cur = toCheck.extractMinimum() as StateNode;
 

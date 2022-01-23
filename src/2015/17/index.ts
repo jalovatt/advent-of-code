@@ -1,16 +1,17 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { split } from '@lib/processing';
 
 const setBit = (state: number, i: number): number => ((1 << i) | state);
 
 const solve = (input: string, total: number): number[] => {
   const sizes = split(input).map((n) => parseInt(n, 10));
+  const breaker = new CircuitBreaker(1000000);
 
   const stateCapacities: Record<number, number> = { 0: 0 };
   const solutions = [];
   const toCheck = [0];
   while (toCheck.length) {
-    circuitBreaker(1000000);
+    breaker.tick();
     const cur = toCheck.pop()!;
 
     for (let i = 0; i < sizes.length; i += 1) {

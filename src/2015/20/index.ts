@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 
 const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53];
 
@@ -26,8 +26,10 @@ export const findNextPrime = (): number => {
   const base = primes[primes.length - 1];
   let cur = Math.ceil(base / 6) * 6;
 
+  const breaker = new CircuitBreaker(10000000);
+
   while (true) {
-    circuitBreaker(10000000);
+    breaker.tick();
     const prev = cur - 1;
 
     if (prev !== primes[primes.length - 1] && isPrime(prev)) {

@@ -1,10 +1,4 @@
-const noop = () => {};
-
-let n = 0;
-
-beforeEach(() => {
-  n = 0;
-});
+type AnyArgs = (...args: any[]) => void;
 
 /**
  * Use as a failsafe when writing/debugging while loops. Will throw if the function
@@ -12,16 +6,35 @@ beforeEach(() => {
  *
  * ```
  * let thing = 0;
+ * const breaker = new CircuitBreaker(1000, (innerVariable) => {
+ *   console.log(`failed at thing = ${thing}`)
+ * });
+ *
  * while (thing < otherThing) {
+ *   const innerVariable = getInnerVariable();
  *   ...stuff...
- *   circuitBreaker(1000);
+ *   breaker.tick(innerVariable);
  * }
  * ```
 */
-export default (limit: number, onFail: () => void = noop) => {
-  n += 1;
-  if (n === limit) {
-    onFail();
-    throw new Error(`Tripped circuit breaker: ${limit}`);
+export default class CircuitBreaker {
+  limit: number;
+  onTrip?: AnyArgs;
+  n: number;
+
+  constructor(limit: number, onTrip?: AnyArgs) {
+    this.limit = limit;
+    this.onTrip = onTrip;
+    this.n = 0;
   }
-};
+
+  tick(...args: any[]) {
+    this.n += 1;
+    if (this.n >= this.limit) {
+      if (this.onTrip) {
+        this.onTrip(...args);
+      }
+      throw new Error(`Tripped circuit breaker @ ${this.limit}`);
+    }
+  }
+}

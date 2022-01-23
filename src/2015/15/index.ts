@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { split } from '@lib/processing';
 
 type Ingredient = {
@@ -108,8 +108,10 @@ const solve = (input: string, needCalories: number | false = false): number => {
   const cookies: Record<number, number> = {};
   const toCheck: number[] = [0];
 
+  const breaker = new CircuitBreaker(10000000);
+
   while (toCheck.length) {
-    circuitBreaker(10000000);
+    breaker.tick();
 
     const cur = toCheck.pop()!;
 

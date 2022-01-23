@@ -90,6 +90,7 @@ type StateTree = Record<number, [number, number][]>;
 const P1_WIN = -1;
 const P2_WIN = -2;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const describeState = (state: number) => {
   if (state === P1_WIN) { return 'P1 Win'; }
   if (state === P2_WIN) { return 'P2 Win'; }

@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { log } from '@lib/logging';
 import { split } from '@lib/processing';
 
@@ -63,10 +63,11 @@ export const validate = (pwd: Password, validateFrom = 0): boolean | number => {
 
 const getNextPassword = (input: string): string => {
   const pwd = parseInput(input);
+  const breaker = new CircuitBreaker(1000000, () => log(`breaker @ ${stringifyPassword(pwd)}`));
 
   let result;
   while (result !== true) {
-    circuitBreaker(1000000, () => log(`breaker @ ${stringifyPassword(pwd)}`));
+    breaker.tick();
 
     mutIncrementPassword(pwd, typeof result === 'number' ? result : LAST_DIGIT_INDEX);
     result = validate(pwd);

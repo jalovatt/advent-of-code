@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { FibonacciHeap, INode } from '@tyriar/fibonacci-heap';
 
 interface StateNode extends INode<number, number> { value: number }
@@ -166,8 +166,10 @@ const play = (input: string, isHard = false): number => {
   const toPlay: FibonacciHeap<number, number> = new FibonacciHeap();
   toPlay.insert(0, initialState);
 
+  const breaker = new CircuitBreaker(10000);
+
   while (!toPlay.isEmpty()) {
-    circuitBreaker(10000);
+    breaker.tick();
     const cur = toPlay.extractMinimum()! as StateNode;
 
     let next = cur.value;

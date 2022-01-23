@@ -1,4 +1,4 @@
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { inspect } from '@lib/logging';
 import { split } from '@lib/processing';
 
@@ -69,12 +69,13 @@ const parseInput = (input: string, addSelf = false): [string[], Nodes, number] =
 */
 const solve = (input: string, addSelf = false): number => {
   const [names, nodes, ALL_VISITED_MASK] = parseInput(input, addSelf);
+  const breaker = new CircuitBreaker(200000);
 
   const solutions: State[] = [];
 
   const toCheck: State[] = [{ at: 'Alice', visited: nodes.Alice.index, happiness: 0 }];
   while (toCheck.length) {
-    circuitBreaker(200000);
+    breaker.tick();
 
     const cur = toCheck.pop()!;
 

@@ -1,5 +1,5 @@
+import CircuitBreaker from '@lib/CircuitBreaker';
 import crypto from 'crypto';
-import circuitBreaker from '@lib/circuitBreaker';
 
 export const getHash = (str: string): string => {
   const MD5 = crypto.createHash('md5');
@@ -10,8 +10,9 @@ export const getHash = (str: string): string => {
 const getNextHash = (input: string, start: number): [string, number] => {
   let i = start;
 
+  const breaker = new CircuitBreaker(50000000);
   while (true) {
-    circuitBreaker(50000000);
+    breaker.tick();
     i += 1;
 
     const hash = getHash(`${input}${i}`);

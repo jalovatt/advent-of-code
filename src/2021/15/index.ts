@@ -1,5 +1,5 @@
 /* eslint-disable no-labels */
-import circuitBreaker from '@lib/circuitBreaker';
+import CircuitBreaker from '@lib/CircuitBreaker';
 import { log } from '@lib/logging';
 import { split, splitToNumber } from '@lib/processing';
 import { BucketQueue } from './BucketQueue';
@@ -148,6 +148,7 @@ const run = (input: string, tiles = 1) => {
   );
 
   toCheck.enqueue(start);
+  const breaker = new CircuitBreaker(1000000);
 
   mainLoop:
   while (toCheck.size) {
@@ -172,7 +173,7 @@ const run = (input: string, tiles = 1) => {
       }
     }
 
-    circuitBreaker(1000000);
+    breaker.tick();
   }
   // time('searching', true);
 
