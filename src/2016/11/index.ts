@@ -275,7 +275,6 @@ class StateHandler {
 
 enum FLOORS { first, second, third, fourth }
 
-// eslint-disable-next-line import/prefer-default-export
 export const solve = (input: string, add?: string): number => {
   const items: Item[] = [];
 

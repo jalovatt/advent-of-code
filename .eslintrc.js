@@ -40,5 +40,6 @@ module.exports = {
     'no-param-reassign': 0,
     'no-nested-ternary': 0,
     'no-constant-condition': 0,
+    'import/prefer-default-export': 0,
   },
 };

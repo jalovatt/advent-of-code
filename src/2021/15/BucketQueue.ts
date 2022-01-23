@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/prefer-default-export
 export class BucketQueue<Type> {
   buckets: Type[][];
   getPriority: (item: Type) => number;
