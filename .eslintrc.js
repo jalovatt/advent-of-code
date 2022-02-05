@@ -41,5 +41,6 @@ module.exports = {
     'no-nested-ternary': 0,
     'no-constant-condition': 0,
     'import/prefer-default-export': 0,
+    'max-classes-per-file': 0,
   },
 };
