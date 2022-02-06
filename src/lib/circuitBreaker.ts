@@ -16,21 +16,31 @@ type AnyArgs = (...args: any[]) => void;
  *   breaker.tick(innerVariable);
  * }
  * ```
+ *
+ * In cases where the exit condition isn't known, you can avoid "unreachable code"
+ * warnings with:
+ * ```
+ * while (!breaker.hasTripped) {
+ * ```
 */
 export default class CircuitBreaker {
   limit: number;
   onTrip?: AnyArgs;
   n: number;
+  hasTripped: boolean;
 
   constructor(limit: number, onTrip?: AnyArgs) {
     this.limit = limit;
     this.onTrip = onTrip;
     this.n = 0;
+    this.hasTripped = false;
   }
 
   tick(...args: any[]) {
     this.n += 1;
     if (this.n >= this.limit) {
+      this.hasTripped = true;
+
       if (this.onTrip) {
         this.onTrip(...args);
       }
