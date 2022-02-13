@@ -55,3 +55,7 @@ export const counter = (label: string, print = false, reset = false) => {
     delete counters[label];
   }
 };
+
+export const color = {
+  invert: (s: any) => `\x1b[7m${s}\x1b[0m`,
+};
