@@ -1,0 +1,67 @@
+-> = something jumps the ipr to here
+        * = this step moves the ipr
+            - "goto X" values include the implicit +1
+
+          #ip 5
+    0     seti    123    x          2
+    1     bani    2      456        2
+    2     eqri    2      72         2
+    3   * addr    2      5          5       ipr = ipr + [2] + 1
+    4   * seti    0      x          5       ipr = 1
+    5     seti    0      x          2
+->  6     bori    2      65536      1
+    7     seti    125    x          2
+->  8     bani    1      255        4                                 [4] = 1 % 255
+    9     addr    2      4          2
+    10    bani    2      16777215   2                                 take lower 24 bits of [2]
+    11    muli    2      65899      2                                 [2] *= 65899
+    12    bani    2      16777215   2                                 take lower 24 bits of [2]
+
+    13    gtir    256    1          4       [4] = [1] < 256 ? 1 : 0   if [1] < 256
+    14  * addr    4      5          5       ipr = ipr + [4] + 1         goto 28                 check exit
+    15  * addi    5      1          5       ipr = 17                  else
+    16  * seti    27     x          5       ipr = 28                    goto 17                 reset 4
+
+->  17    seti    0      x          4                                 [4] = 0
+
+->  18    addi    4      1          3                                                           [3] = ([4] + 1) * 256
+    19    muli    3      256        3
+    20    gtrr    3      1          3       [3] = [3] > [1] ? 1 : 0   if [3] > [1]              if [3] > [1] {
+    21  * addr    3      5          5       ipr = ipr + [3] + 1         goto 26                   [1] = [4]
+    22  * addi    5      1          5       ipr = 24                  else                        goto 8
+    23  * seti    25     x          5       ipr = 26                    goto 24                 } else {
+
+->  24    addi    4      1          4                                                             [4] += 1
+    25  * seti    17     x          5       ipr = 18                                              goto 18
+
+->  26    setr    4      x          1                                                           }
+    27  * seti    7      x          5       ipr = 8
+
+->  28    eqrr    2      0          4       [4] = [2] === [0] ? 1 : 0   if [2] === [0]
+    29  * addr    4      5          5       ipr = ipr + [4] + 1         goto 6
+    30  * seti    5      x          5       ipr = 6                   else
+                                                                    EXIT
+
+Functions:
+[0]   Input
+[1]   Output 1
+[2]   Output 2
+[3]   Temp var
+[4]   Counter
+[5]   IPR
+
+Whenever [4] * 256 passes [1],
+  set [1] = [4]
+  reset [4]
+  set [2] = ([2] + [4]) % 16777216
+
+[1] and [2] run through a very long sequence of numbers
+[0] is valid (will halt) if it appears in the sequence WITH a [1] < 256.
+
+[0] is only ever referenced on line 28. This means that the input has no effect
+on how the program runs - for any valid input, the program just runs the same
+sequence until that number comes up.
+
+Because of this, we don't have to test multiple inputs. Just run the program until
+we get either the first [2] that would allow it to halt, or the last one before
+the [1] + [2] start to repeat.
