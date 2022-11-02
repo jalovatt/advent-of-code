@@ -14,3 +14,7 @@ This repo uses Yarn 2, Typescript, and Jest.
 4. `yarn test 2021/23` - run a specific day
 5. `yarn day 21` - copy the template to a new folder for day 21 of the current calendar year, open that day's puzzle page and input, and start `yarn test` in watch mode.
 6. `yarn day 2015 21` - as above, but for a specific year.
+
+## Skipped for now
+
+- 2018, day 22, part 2. Three rewrites and I still can't get it. :(
