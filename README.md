@@ -22,9 +22,9 @@ Initialize the folder and files for day `dd`, of either `yyyy` or the current ca
 
 #### `yarn test:intcode`
 
-Run all tests related to 2019's recurring element IntCode virtual machine, which is expanded with new instructions and operating modes over multiple days.
+Run all tests related to 2019's recurring feature, [the IntCode virtual machine](https://adventofcode.com/2019/day/2), which is expanded with new instructions and operating modes over multiple days.
 
-These solutions all import the same IntCode class, so it was useful to have a full IntCode suite running as changes were made.
+These solutions all import the same IntCode class, so it was useful to have the full IntCode test suite running as changes were made.
 
 ## Skipped for now
 

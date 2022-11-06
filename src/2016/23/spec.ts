@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { solve } from '.';
 
-const title = 'No title yet';
+const title = 'Safe Cracking';
 
 const input = loadText('input.txt');
 

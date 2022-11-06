@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1, part2, getFinalState } from '.';
 
-const title = 'No title yet';
+const title = '1202 Program Alarm';
 
 const input = loadText('input.txt');
 

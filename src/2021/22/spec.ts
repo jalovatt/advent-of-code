@@ -1,7 +1,7 @@
 import loadText from '@lib/loadText';
 import { a, b, parseLine } from '.';
 
-const title = 'No title yet';
+const title = 'Reactor Reboot';
 
 const input = loadText('input.txt');
 

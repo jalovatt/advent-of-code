@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1, part2 } from '.';
 
-const title = 'No title yet';
+const title = 'Experimental Emergency Teleportation';
 
 const input = loadText('input.txt');
 

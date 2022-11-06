@@ -3,7 +3,7 @@ import loadText from '@lib/loadText';
 import { IntCode } from '../IntCode';
 import { part1, part2 } from '.';
 
-const title = 'No title yet';
+const title = 'Sunny with a Chance of Asteroids';
 
 const input = loadText('input.txt');
 

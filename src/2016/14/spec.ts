@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { solve, part2 } from '.';
 
-const title = 'No title yet';
+const title = 'One-Time Pad';
 
 const input = loadText('input.txt');
 

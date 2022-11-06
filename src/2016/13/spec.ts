@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { solve } from '.';
 
-const title = 'No title yet';
+const title = 'A Maze of Twisty Little Cubicles';
 
 const input = loadText('input.txt');
 

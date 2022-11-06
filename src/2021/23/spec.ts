@@ -3,7 +3,7 @@ import loadText from '@lib/loadText';
 import { a, b, parseInput, searchStep } from './index';
 import type { StateNode, StateNodes } from './index';
 
-const title = 'No title yet';
+const title = 'Amphipod';
 
 const input = loadText('input.txt');
 

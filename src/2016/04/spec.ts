@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { decrypt, part1, part2, validate } from '.';
 
-const title = 'No title yet';
+const title = 'Security Through Obscurity';
 
 const input = loadText('input.txt');
 

@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1, part2, primeFactorize, sumPrimeFactors, isPrime, findNextPrime } from '.';
 
-const title = 'No title yet';
+const title = 'Infinite Elves and Infinite Houses';
 
 const input = loadText('input.txt');
 

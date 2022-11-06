@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { getEscapedCount, getNetCount, part1, part2 } from '.';
 
-const title = 'No title yet';
+const title = 'Matchsticks';
 
 const input = loadText('input.txt');
 

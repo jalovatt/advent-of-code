@@ -1,7 +1,7 @@
 import loadText from '@lib/loadText';
 import { a, b } from '.';
 
-const title = 'No title yet';
+const title = 'Arithmetic Logic Unit';
 
 const input = loadText('input.txt');
 

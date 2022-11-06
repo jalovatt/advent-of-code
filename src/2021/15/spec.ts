@@ -1,7 +1,7 @@
 import loadText from '@lib/loadText';
 import { a, b } from '.';
 
-const title = 'No title yet';
+const title = 'Chiton';
 
 const input = loadText('input.txt');
 

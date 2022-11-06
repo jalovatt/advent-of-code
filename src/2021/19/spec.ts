@@ -4,7 +4,7 @@ import { dir, log } from '@lib/logging';
 import { a, b, determinant, subtraction } from '.';
 import rotations from './rotations';
 
-const title = 'No title yet';
+const title = 'Beacon Scanner';
 
 const input = loadText('input.txt');
 

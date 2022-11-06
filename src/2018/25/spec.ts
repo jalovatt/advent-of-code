@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1 } from '.';
 
-const title = 'No title yet';
+const title = 'Four-Dimensional Adventure';
 
 const input = loadText('input.txt');
 
