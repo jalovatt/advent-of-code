@@ -7,6 +7,7 @@
   "scripts": {
     "test": "jest --verbose",
     "test:silent": "jest",
+    "test:intcode": "jest --verbose --findRelatedTests src/2019/IntCode.ts",
     "lint": "eslint --ext .js,.ts .",
     "day": "node ./init-day.js"
   },
