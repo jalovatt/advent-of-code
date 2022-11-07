@@ -24,16 +24,26 @@ enum ParamMode {
 
 type ParamModes = [ParamMode, ParamMode, ParamMode];
 
+export enum RunState {
+  Idle,
+  Running,
+  Waiting,
+  Halted,
+}
+
 export class IntCode {
   state: number[];
   cursor: number;
   input: number[];
   output: number[];
+  runState: RunState;
   debug: boolean;
 
   constructor(inputStr: string, { replaceInitialState, input = [] }: ConstructorArgs = {}) {
     this.state = splitToNumber(inputStr, ',');
+
     this.cursor = 0;
+    this.runState = RunState.Idle;
     this.debug = false;
 
     this.input = input;
@@ -56,7 +66,7 @@ export class IntCode {
     return this.state[index];
   }
 
-  codes: { [key in OpCode]: (modes: ParamModes) => number | null } = {
+  codes: { [key in OpCode]: (modes: ParamModes) => number } = {
     [OpCode.Add]: (modes) => {
       const a = this.read(1, modes[0]);
       const b = this.read(2, modes[1]);
@@ -86,7 +96,12 @@ export class IntCode {
       const dest = this.read(1, 1);
 
       if (!this.input.length) {
-        throw new Error('Unexpected end of input');
+        this.runState = RunState.Waiting;
+        return this.cursor;
+      }
+
+      if (this.runState === RunState.Waiting) {
+        this.runState = RunState.Running;
       }
 
       this.state[dest] = this.input.shift()!;
@@ -142,7 +157,10 @@ export class IntCode {
 
       return this.cursor + 4;
     },
-    [OpCode.End]: () => null,
+    [OpCode.End]: () => {
+      this.runState = RunState.Halted;
+      return this.cursor;
+    },
   };
 
   step() {
@@ -172,19 +190,17 @@ export class IntCode {
 
     const next = this.codes[code](modes as ParamModes);
 
-    if (next !== null) {
+    if (this.runState === RunState.Running) {
       this.cursor = next;
     }
-
-    return next;
   }
 
   run() {
-    let result;
+    this.runState = RunState.Running;
 
     do {
-      result = this.step();
-    } while (result !== null);
+      this.step();
+    } while (this.runState === RunState.Running);
 
     return this.state;
   }
