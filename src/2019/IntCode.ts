@@ -1,3 +1,4 @@
+import { dir } from '@lib/logging';
 import { splitToNumber } from '@lib/processing';
 
 enum OpCode {
@@ -9,6 +10,7 @@ enum OpCode {
   JumpNot = 6,
   Less = 7,
   Equals = 8,
+  AdjustRelative = 9,
   End = 99,
 }
 
@@ -20,6 +22,7 @@ type ConstructorArgs = {
 enum ParamMode {
   Position = 0,
   Immediate = 1,
+  Relative = 2,
 }
 
 type ParamModes = [ParamMode, ParamMode, ParamMode];
@@ -36,6 +39,7 @@ export class IntCode {
   cursor: number;
   input: number[];
   output: number[];
+  relativeBase: number;
   runState: RunState;
   debug: boolean;
 
@@ -44,6 +48,7 @@ export class IntCode {
 
     this.cursor = 0;
     this.runState = RunState.Idle;
+    this.relativeBase = 0;
     this.debug = false;
 
     this.input = input;
@@ -56,45 +61,50 @@ export class IntCode {
     }
   }
 
-  read(offset: number, mode: ParamMode = 0) {
-    const index = this.state[this.cursor + offset];
+  write(offset: number, mode: ParamMode, value: number) {
+    const index = this.state[this.cursor + offset] ?? 0;
 
-    if (mode === 1) {
+    if (mode === ParamMode.Immediate) {
+      throw new Error('Cannot write in Immediate mode');
+    } else if (mode === ParamMode.Relative) {
+      this.state[this.relativeBase + index] = value;
+    } else {
+      this.state[index] = value;
+    }
+  }
+
+  read(offset: number, mode: ParamMode) {
+    const index = this.state[this.cursor + offset] ?? 0;
+
+    if (mode === ParamMode.Immediate) {
       return index;
     }
 
-    return this.state[index];
+    if (mode === ParamMode.Relative) {
+      return this.state[this.relativeBase + index] ?? 0;
+    }
+
+    return this.state[index] ?? 0;
   }
 
   codes: { [key in OpCode]: (modes: ParamModes) => number } = {
     [OpCode.Add]: (modes) => {
       const a = this.read(1, modes[0]);
       const b = this.read(2, modes[1]);
-      /*
-        Write parameters are always read as Immediate; the value at [cursor + 3]
-        is the index we write to.
 
-        This is backwards from how the puzzle specifies it, which I find
-        misleading. If [cursor + 3] has 4, we write to 4 rather than checking
-        [4] for our destination index.
-      */
-      const dest = this.read(3, 1);
+      this.write(3, modes[2], a + b);
 
-      this.state[dest] = a + b;
       return this.cursor + 4;
     },
     [OpCode.Mult]: (modes) => {
       const a = this.read(1, modes[0]);
       const b = this.read(2, modes[1]);
-      const dest = this.read(3, 1);
 
-      this.state[dest] = a * b;
+      this.write(3, modes[2], a * b);
 
       return this.cursor + 4;
     },
-    [OpCode.In]: () => {
-      const dest = this.read(1, 1);
-
+    [OpCode.In]: (modes) => {
       if (!this.input.length) {
         this.runState = RunState.Waiting;
         return this.cursor;
@@ -104,11 +114,13 @@ export class IntCode {
         this.runState = RunState.Running;
       }
 
-      this.state[dest] = this.input.shift()!;
+      const v = this.input.shift()!;
+
+      this.write(1, modes[0], v);
 
       if (this.debug) {
         // eslint-disable-next-line no-console
-        console.log('Read value', this.state[dest], 'from input to', dest);
+        console.log('Read value', v, 'from input');
       }
 
       return this.cursor + 2;
@@ -116,6 +128,11 @@ export class IntCode {
     [OpCode.Out]: (modes) => {
       const src = this.read(1, modes[0]);
       this.output.push(src);
+
+      if (this.debug) {
+        // eslint-disable-next-line no-console
+        console.log('Wrote value', src, 'to output');
+      }
 
       return this.cursor + 2;
     },
@@ -138,24 +155,24 @@ export class IntCode {
     [OpCode.Less]: (modes) => {
       const a = this.read(1, modes[0]);
       const b = this.read(2, modes[1]);
-      const c = this.read(3, 1);
 
-      this.state[c] = (a < b)
-        ? 1
-        : 0;
+      this.write(3, modes[2], a < b ? 1 : 0);
 
       return this.cursor + 4;
     },
     [OpCode.Equals]: (modes) => {
       const a = this.read(1, modes[0]);
       const b = this.read(2, modes[1]);
-      const c = this.read(3, 1);
 
-      this.state[c] = (a === b)
-        ? 1
-        : 0;
+      this.write(3, modes[2], a === b ? 1 : 0);
 
       return this.cursor + 4;
+    },
+    [OpCode.AdjustRelative]: (modes) => {
+      const v = this.read(1, modes[0]);
+      this.relativeBase += v;
+
+      return this.cursor + 2;
     },
     [OpCode.End]: () => {
       this.runState = RunState.Halted;
@@ -178,13 +195,15 @@ export class IntCode {
 
     const code = instruction % 100 as OpCode;
 
-    if (this.debug) {
-      // eslint-disable-next-line no-console
-      console.dir({
-        state: this.stringifyState(),
+    if (this.debug || !this.codes[code]) {
+      dir({
+        cursor: this.cursor,
         instruction,
         modes,
         code: `${code} - ${OpCode[code]}`,
+        params: this.state.slice(this.cursor + 1, this.cursor + 4),
+        relativeBase: this.relativeBase,
+        state: this.stringifyState(),
       });
     }
 
@@ -208,6 +227,7 @@ export class IntCode {
   stringifyState(): string {
     const out: (string | number)[] = [...this.state];
     out[this.cursor] = `[${out[this.cursor]}]`;
+    out[this.relativeBase] = `{${out[this.relativeBase]}}`;
 
     return out.join(',');
   }
