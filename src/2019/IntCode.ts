@@ -28,7 +28,6 @@ enum ParamMode {
 type ParamModes = [ParamMode, ParamMode, ParamMode];
 
 export enum RunState {
-  Idle,
   Running,
   Waiting,
   Halted,
@@ -47,7 +46,7 @@ export class IntCode {
     this.state = splitToNumber(inputStr, ',');
 
     this.cursor = 0;
-    this.runState = RunState.Idle;
+    this.runState = RunState.Waiting;
     this.relativeBase = 0;
     this.debug = false;
 
@@ -203,6 +202,8 @@ export class IntCode {
         code: `${code} - ${OpCode[code]}`,
         params: this.state.slice(this.cursor + 1, this.cursor + 4),
         relativeBase: this.relativeBase,
+        input: this.input,
+        output: this.output,
         state: this.stringifyState(),
       });
     }
