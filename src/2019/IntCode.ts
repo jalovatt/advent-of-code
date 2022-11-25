@@ -42,7 +42,7 @@ export class IntCode {
   runState: RunState;
   debug: boolean;
 
-  constructor(inputStr: string, { replaceInitialState, input = [] }: ConstructorArgs = {}) {
+  constructor(inputStr: string, { replaceInitialState = [], input = [] }: ConstructorArgs = {}) {
     this.state = splitToNumber(inputStr, ',');
 
     this.cursor = 0;
@@ -53,11 +53,9 @@ export class IntCode {
     this.input = input;
     this.output = [];
 
-    if (replaceInitialState) {
-      replaceInitialState.forEach(([i, v]) => {
-        this.state[i] = v;
-      });
-    }
+    replaceInitialState.forEach(([i, v]) => {
+      this.state[i] = v;
+    });
   }
 
   write(offset: number, mode: ParamMode, value: number) {
