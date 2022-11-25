@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { IntCode } from '../IntCode';
 
-const title = 'No title yet';
+const title = 'Sensor Boost';
 
 const input = loadText('input.txt');
 
