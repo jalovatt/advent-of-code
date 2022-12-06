@@ -7,7 +7,8 @@ const d = new Date();
 const [,, ...args] = process.argv;
 
 let year = d.getFullYear();
-let day = d.getDate().toString(10);
+// The ISO date is in GMT, so it will always be the correct value at midnight EST
+let day = d.toISOString().match(/(\d+)T/)[1];
 
 if (args.length === 1) {
   day = args[0];
