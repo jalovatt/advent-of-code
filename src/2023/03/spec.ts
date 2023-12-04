@@ -2,7 +2,7 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1, part2 } from '.';
 
-const title = 'No title yet';
+const title = 'Gear Ratios';
 
 const input = loadText('input.txt');
 
@@ -18,35 +18,6 @@ const example1 = `
 ...$.*....
 .664.598..
 `;
-
-/*
-  788         <--
-  963   963
-  41    41
-  481   481
-  707   707
-  562   562
-  356   356
-  926   926
-  467   467
-  688   688
-  673   673
-  957   957
-  103   103
-  628   628
-  62    62
-  15    15
-  222   222
-  795   795
-  418   418
-  57    57
-  125   125
-  141   141
-  926         <--
-  476   476
-  167   167
-  208   208
-*/
 
 const example2 = `
 ...788...........................
