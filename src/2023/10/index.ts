@@ -1,6 +1,4 @@
-import CircuitBreaker from '@lib/CircuitBreaker';
-import { dir, log } from '@lib/logging';
-import { split, split2D } from '@lib/processing';
+import { split2D } from '@lib/processing';
 
 enum Tile {
   NS = '|', // a vertical pipe connecting north and south.
@@ -29,25 +27,6 @@ const ConnectionDirections: Record<NavigableTile, Direction[]> = {
   [Tile.NE]: [Direction.N, Direction.E],
   [Tile.SE]: [Direction.S, Direction.E],
   [Tile.SW]: [Direction.S, Direction.W],
-};
-
-const WickablePairs: Record<Direction, [Tile[], Tile[]]> = {
-  [Direction.N]: [
-    [Tile.NS, Tile.NW, Tile.SW],
-    [Tile.NS, Tile.NE, Tile.SE],
-  ],
-  [Direction.S]: [
-    [Tile.NS, Tile.NW, Tile.SW],
-    [Tile.NS, Tile.NE, Tile.SE],
-  ],
-  [Direction.E]: [
-    [Tile.EW, Tile.NE, Tile.NW],
-    [Tile.EW, Tile.SE, Tile.SW],
-  ],
-  [Direction.W]: [
-    [Tile.EW, Tile.NE, Tile.NW],
-    [Tile.EW, Tile.SE, Tile.SW],
-  ],
 };
 
 class Walker {
@@ -107,7 +86,7 @@ class Walker {
     }
   }
 
-  getConnections(pos: number, allowGround = false): number[] {
+  getConnections(pos: number): number[] {
     const v = this.maze[pos];
     if (v === Tile.Ground || v === Tile.Start) {
       return [];
@@ -142,55 +121,6 @@ class Walker {
 
     return Math.max(...Array.from(this.visited.values()));
   }
-
-  // countVisitedTilesInDirection(from: number, direction: Direction): number {
-  //   let count = 0;
-  //   let cur = from;
-
-  //   switch (direction) {
-  //     case Direction.N: {
-  //       while (cur >= 0) {
-  //         cur -= this.rowLength;
-  //         if (this.visited.has(cur)) {
-  //           count += 1;
-  //         }
-  //       }
-
-  //       break;
-  //     }
-  //     case Direction.S: {
-  //       while (cur < this.maze.length) {
-  //         cur += this.rowLength;
-  //         if (this.visited.has(cur)) {
-  //           count += 1;
-  //         }
-  //       }
-
-  //       break;
-  //     }
-  //     case Direction.E: {
-  //       while (cur % this.rowLength < this.rowLength - 1) {
-  //         cur += 1;
-  //         if (this.visited.has(cur)) {
-  //           count += 1;
-  //         }
-  //       }
-  //       break;
-  //     }
-  //     case Direction.W:
-  //     default: {
-  //       while (cur % this.rowLength > 0) {
-  //         cur -= 1;
-  //         if (this.visited.has(cur)) {
-  //           count += 1;
-  //         }
-  //       }
-  //       break;
-  //     }
-  //   }
-
-  //   return count;
-  // }
 }
 
 export const part1 = (input: string): number => new Walker(input).run();
@@ -198,176 +128,36 @@ export const part2 = (input: string): number => {
   const walker = new Walker(input);
   walker.run();
 
-  const top = new Array(walker.nColumns).fill(null).map((_, i) => i);
-  const bottom = new Array(walker.nColumns).fill(null).map((_, i) => walker.maze.length - walker.nColumns + i);
-  const left = new Array(walker.nRows - 2).fill(null).map((_, i) => (i + 1) * walker.nColumns);
-  const right = new Array(walker.nRows - 2).fill(null).map((_, i) => (i + 2) * walker.nColumns - 1);
+  const verticals = new Set([Tile.NS, Tile.NW, Tile.NE]);
+  const unenclosed: Set<number> = new Set();
 
-  const all = top.concat(bottom, left, right);
-  const perimeterGroundPositions = Array.from(new Set(all.filter((n) => walker.maze[n] === Tile.Ground)));
+  let enclosed = 0;
+  for (const n of walker.maze.keys()) {
+    if (walker.visited.has(n)) {
+      continue;
+    }
 
-  const visitedFilling: Set<number> = new Set(perimeterGroundPositions);
-  const visitedWicks: Set<number> = new Set();
-  const toVisit: number[] = [...perimeterGroundPositions];
+    // We're adjacent to a tile we know isn't enclosed, so this can't be either
+    if (unenclosed.has(n - 1) || unenclosed.has(n - walker.nColumns)) {
+      unenclosed.add(n);
+      continue;
+    }
 
-  const allDirections = [Direction.N, Direction.S, Direction.E, Direction.W];
+    const rowStart = (n / walker.nColumns) >> 0;
 
-  // type Wick = {
-  //   positions: [number, number];
-  //   direction: Direction;
-  // };
-
-  // Run a wick in a straight line
-  // Hopefully there are no corners/intersections to worry about
-
-  const runWick = (a: number, b: number, d: Direction) => {
-    const aNext = walker.getRelativePosition(a, d);
-    const bNext = walker.getRelativePosition(b, d);
-
-    let foundEmpty = false;
-
-    if (aNext !== null) {
-      if (walker.maze[aNext] === Tile.Ground && !visitedFilling.has(aNext)) {
-        toVisit.push(aNext);
-        visitedFilling.add(aNext);
-        foundEmpty = true;
+    let count = 0;
+    for (let i = n - 1; i >= rowStart; i -= 1) {
+      if (walker.visited.has(i) && verticals.has(walker.maze[i])) {
+        count += 1;
       }
     }
 
-    if (bNext !== null) {
-      if (walker.maze[bNext] === Tile.Ground && !visitedFilling.has(bNext)) {
-        toVisit.push(bNext);
-        visitedFilling.add(bNext);
-        foundEmpty = true;
-      }
-    }
-
-    if (!foundEmpty && aNext !== null && bNext !== null) {
-      if (
-        WickablePairs[d][0].includes(walker.maze[aNext])
-        && WickablePairs[d][1].includes(walker.maze[bNext])
-        && !visitedWicks.has(aNext * 100000 + bNext)
-      ) {
-        visitedWicks.add(aNext * 100000 + bNext);
-        runWick(aNext, bNext, d);
-      }
-    }
-  };
-
-  const breaker = new CircuitBreaker(
-    10000,
-    () => dir({ toVisit, nVisitedWicking: visitedWicks.size }),
-  );
-
-  while (toVisit.length) {
-    breaker.tick();
-    const cur = toVisit.pop()!;
-
-    // Check adjacent tiles
-    for (const d of allDirections) {
-      const rel = walker.getRelativePosition(cur, d)!;
-
-      if (walker.maze[rel] === Tile.Ground && !visitedFilling.has(rel)) {
-        toVisit.push(rel);
-        visitedFilling.add(rel);
-      }
-    }
-
-    const nPos = walker.getRelativePosition(cur, Direction.N);
-    const sPos = walker.getRelativePosition(cur, Direction.S);
-    const ePos = walker.getRelativePosition(cur, Direction.E);
-    const wPos = walker.getRelativePosition(cur, Direction.W);
-
-    if (nPos !== null) {
-      const n = walker.maze[nPos];
-
-      if (ePos !== null) {
-        const e = walker.maze[ePos];
-
-        const nePos = walker.getRelativePosition(nPos, Direction.E)!;
-        const ne = walker.maze[nePos];
-
-        if (WickablePairs.N[0].includes(n) && WickablePairs.N[1].includes(ne)) {
-          runWick(nPos, nePos, Direction.N);
-        }
-
-        if (WickablePairs.E[0].includes(ne) && WickablePairs.E[1].includes(e)) {
-          runWick(nePos, ePos, Direction.E);
-        }
-
-        if (ne === Tile.Ground && !visitedFilling.has(nePos)) {
-          toVisit.push(nePos);
-          visitedFilling.add(nePos);
-        }
-      }
-
-      if (wPos !== null) {
-        const w = walker.maze[wPos];
-
-        const nwPos = walker.getRelativePosition(nPos, Direction.W)!;
-        const nw = walker.maze[nwPos];
-
-        if (WickablePairs.N[0].includes(n) && WickablePairs.N[1].includes(nw)) {
-          runWick(nPos, nwPos, Direction.N);
-        }
-
-        if (WickablePairs.W[0].includes(nw) && WickablePairs.W[1].includes(w)) {
-          runWick(nwPos, wPos, Direction.W);
-        }
-
-        if (nw === Tile.Ground && !visitedFilling.has(nwPos)) {
-          toVisit.push(nwPos);
-          visitedFilling.add(nwPos);
-        }
-      }
-    }
-
-    if (sPos !== null) {
-      const s = walker.maze[sPos];
-
-      if (ePos !== null) {
-        const e = walker.maze[ePos];
-
-        const sePos = walker.getRelativePosition(sPos, Direction.E)!;
-        const se = walker.maze[sePos];
-
-        if (WickablePairs.S[0].includes(s) && WickablePairs.S[1].includes(se)) {
-          runWick(sPos, sePos, Direction.S);
-        }
-
-        if (WickablePairs.E[0].includes(se) && WickablePairs.E[1].includes(e)) {
-          runWick(sePos, ePos, Direction.E);
-        }
-
-        if (se === Tile.Ground && !visitedFilling.has(sePos)) {
-          toVisit.push(sePos);
-          visitedFilling.add(sePos);
-        }
-      }
-
-      if (wPos !== null) {
-        const w = walker.maze[wPos];
-
-        const swPos = walker.getRelativePosition(sPos, Direction.W)!;
-        const sw = walker.maze[swPos];
-
-        if (WickablePairs.S[0].includes(s) && WickablePairs.S[1].includes(sw)) {
-          runWick(sPos, swPos, Direction.S);
-        }
-
-        if (WickablePairs.W[0].includes(sw) && WickablePairs.W[1].includes(w)) {
-          runWick(swPos, wPos, Direction.W);
-        }
-
-        if (sw === Tile.Ground && !visitedFilling.has(swPos)) {
-          toVisit.push(swPos);
-          visitedFilling.add(swPos);
-        }
-      }
+    if (count % 2 !== 0) {
+      enclosed += 1;
+    } else {
+      unenclosed.add(n);
     }
   }
 
-  dir({ perimeterGroundPositions, visitedFilling, visitedWicks });
-
-  return walker.maze.length - walker.visited.size - visitedFilling.size;
+  return enclosed;
 };

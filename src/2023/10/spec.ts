@@ -97,18 +97,17 @@ describeDay(title, () => {
   describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        // [example3, 4],
-        // [example4, 4],
-        // [example5, 8],
+        [example3, 4],
+        [example4, 4],
+        [example5, 8],
         [example6, 10],
       ])('%p => %p', (given, expected) => {
         expect(part2(given)).toEqual(expected);
       });
     });
 
-    xdescribe('Solution', () => {
-      // 5899 too high
-      const knownSolution = null;
+    describe('Solution', () => {
+      const knownSolution = 269;
 
       test(`${knownSolution}`, () => {
         const solution = part2(input);
