@@ -129,33 +129,22 @@ export const part2 = (input: string): number => {
   walker.run();
 
   const verticals = new Set([Tile.NS, Tile.NW, Tile.NE]);
-  const unenclosed: Set<number> = new Set();
 
   let enclosed = 0;
+  let currentlyInside = false;
+
   for (const n of walker.maze.keys()) {
+    // Start of a row
+    if (n === (n / walker.nColumns) >> 0) {
+      currentlyInside = false;
+    }
+
     if (walker.visited.has(n)) {
-      continue;
-    }
-
-    // We're adjacent to a tile we know isn't enclosed, so this can't be either
-    if (unenclosed.has(n - 1) || unenclosed.has(n - walker.nColumns)) {
-      unenclosed.add(n);
-      continue;
-    }
-
-    const rowStart = (n / walker.nColumns) >> 0;
-
-    let count = 0;
-    for (let i = n - 1; i >= rowStart; i -= 1) {
-      if (walker.visited.has(i) && verticals.has(walker.maze[i])) {
-        count += 1;
+      if (verticals.has(walker.maze[n])) {
+        currentlyInside = !currentlyInside;
       }
-    }
-
-    if (count % 2 !== 0) {
+    } else if (currentlyInside) {
       enclosed += 1;
-    } else {
-      unenclosed.add(n);
     }
   }
 
