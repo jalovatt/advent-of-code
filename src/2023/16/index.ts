@@ -20,162 +20,209 @@ enum Direction {
 type Field = Tile[][];
 type Beam = { x: number; y: number, direction: Direction };
 
-const encodePos = (x: number, y: number) => (y << 8) + x;
+const encodePos = (x: number, y: number) => (y << 7) + x;
 const decodePos = {
-  x: (pos: number) => pos & 0b11111111,
-  y: (pos: number) => pos >> 8,
+  x: (pos: number) => pos & 0b1111111,
+  y: (pos: number) => pos >> 7,
 };
 
-const encodeBeam = (b: Beam) => (((b.direction << 8) + b.y) << 8) + b.x;
+const encodeBeam = (b: Beam) => (((b.direction << 7) + b.y) << 7) + b.x;
 
-const moveBeam = (b: Beam, field: Field): boolean => {
-  switch (b.direction) {
-    case Direction.N: {
-      b.y -= 1;
+class BeamRunner {
+  field: Field;
+  beams: Beam[];
+  energized: Set<number>;
+  seenBeams: Set<number>;
 
-      return b.y >= 0;
-    }
-    case Direction.S: {
-      b.y += 1;
-
-      return b.y < field.length;
-    }
-    case Direction.E: {
-      b.x += 1;
-
-      return b.x < field[0].length;
-    }
-    case Direction.W:
-    default: {
-      b.x -= 1;
-
-      return b.x >= 0;
-    }
-  }
-};
-
-const printField = (field: Field, visited: Set<number>) => {
-  const out = field.map((row) => row.concat());
-
-  for (const v of visited.values()) {
-    const x = decodePos.x(v);
-    const y = decodePos.y(v);
-
-    out[y][x] = '#' as Tile;
+  constructor(field: Field, origin: Beam) {
+    this.field = field;
+    this.beams = [origin];
+    this.energized = new Set();
+    this.seenBeams = new Set();
   }
 
-  log(out.map((row) => row.join('')).join('\n'));
-};
-
-export const part1 = (input: string): number => {
-  const field = split2D(input) as Field;
-  const beams: Beam[] = [{ x: -1, y: 0, direction: Direction.E }];
-  const energized: Set<number> = new Set();
-  const seenBeams: Set<number> = new Set();
-
-  const pushBeam = (b: Beam) => {
+  pushBeam(b: Beam) {
     const encoded = encodeBeam(b);
 
-    if (!seenBeams.has(encoded)) {
-      beams.push(b);
-      seenBeams.add(encoded);
+    if (!this.seenBeams.has(encoded)) {
+      this.beams.push(b);
+      this.seenBeams.add(encoded);
     }
-  };
+  }
 
-  const breaker = new CircuitBreaker(100000, () => { dir(beams); });
-  while (beams.length > 0) {
-    breaker.tick();
-    const cur = beams.pop()!;
+  moveBeam(b: Beam): boolean {
+    switch (b.direction) {
+      case Direction.N: {
+        b.y -= 1;
 
-    const stillActive = moveBeam(cur, field);
-    if (!stillActive) { continue; }
+        return b.y >= 0;
+      }
+      case Direction.S: {
+        b.y += 1;
 
-    energized.add(encodePos(cur.x, cur.y));
+        return b.y < this.field.length;
+      }
+      case Direction.E: {
+        b.x += 1;
 
-    const newTile = field[cur.y][cur.x];
+        return b.x < this.field[0].length;
+      }
+      case Direction.W:
+      default: {
+        b.x -= 1;
+
+        return b.x >= 0;
+      }
+    }
+  }
+
+  applyTile(b: Beam) {
+    const newTile = this.field[b.y][b.x];
 
     switch (newTile) {
       case Tile.MirrorNE: {
-        switch (cur.direction) {
+        switch (b.direction) {
           case Direction.N: {
-            cur.direction = Direction.E;
-            pushBeam(cur);
+            b.direction = Direction.E;
             break;
           }
           case Direction.S: {
-            cur.direction = Direction.W;
-            pushBeam(cur);
+            b.direction = Direction.W;
             break;
           }
           case Direction.E: {
-            cur.direction = Direction.N;
-            pushBeam(cur);
+            b.direction = Direction.N;
             break;
           }
           case Direction.W:
           default: {
-            cur.direction = Direction.S;
-            pushBeam(cur);
-            break;
+            b.direction = Direction.S;
           }
         }
+        this.pushBeam(b);
         break;
       }
       case Tile.MirrorNW: {
-        switch (cur.direction) {
+        switch (b.direction) {
           case Direction.N: {
-            cur.direction = Direction.W;
-            pushBeam(cur);
+            b.direction = Direction.W;
             break;
           }
           case Direction.S: {
-            cur.direction = Direction.E;
-            pushBeam(cur);
+            b.direction = Direction.E;
             break;
           }
           case Direction.E: {
-            cur.direction = Direction.S;
-            pushBeam(cur);
+            b.direction = Direction.S;
             break;
           }
           case Direction.W:
           default: {
-            cur.direction = Direction.N;
-            pushBeam(cur);
-            break;
+            b.direction = Direction.N;
           }
         }
+        this.pushBeam(b);
         break;
       }
       case Tile.SplitterEW: {
-        if (cur.direction === Direction.E || cur.direction === Direction.W) {
-          pushBeam(cur);
-        } else {
-          pushBeam({ x: cur.x, y: cur.y, direction: Direction.W });
-          pushBeam({ x: cur.x, y: cur.y, direction: Direction.E });
+        switch (b.direction) {
+          case Direction.E:
+          case Direction.W: {
+            this.pushBeam(b);
+            break;
+          }
+          case Direction.N:
+          case Direction.S:
+          default: {
+            this.pushBeam({ x: b.x, y: b.y, direction: Direction.W });
+            this.pushBeam({ x: b.x, y: b.y, direction: Direction.E });
+          }
         }
         break;
       }
       case Tile.SplitterNS: {
-        if (cur.direction === Direction.N || cur.direction === Direction.S) {
-          pushBeam(cur);
-        } else {
-          pushBeam({ x: cur.x, y: cur.y, direction: Direction.N });
-          pushBeam({ x: cur.x, y: cur.y, direction: Direction.S });
+        switch (b.direction) {
+          case Direction.N:
+          case Direction.S: {
+            this.pushBeam(b);
+            break;
+          }
+          case Direction.E:
+          case Direction.W:
+          default: {
+            this.pushBeam({ x: b.x, y: b.y, direction: Direction.N });
+            this.pushBeam({ x: b.x, y: b.y, direction: Direction.S });
+          }
         }
         break;
       }
       case Tile.Empty:
       default: {
-        pushBeam(cur);
-        break;
+        this.pushBeam(b);
       }
     }
   }
 
-  // printField(field, energized);
-  // dir(energized);
+  run(): number {
+    const breaker = new CircuitBreaker(100000, () => { dir(this.beams); });
+    while (this.beams.length > 0) {
+      breaker.tick();
+      const cur = this.beams.pop()!;
 
-  return energized.size;
+      const stillActive = this.moveBeam(cur);
+      if (!stillActive) { continue; }
+
+      this.energized.add(encodePos(cur.x, cur.y));
+
+      this.applyTile(cur);
+    }
+
+    return this.energized.size;
+  }
+
+  print() {
+    const out = this.field.map((row) => row.concat());
+
+    for (const v of this.energized.values()) {
+      const x = decodePos.x(v);
+      const y = decodePos.y(v);
+
+      out[y][x] = '#' as Tile;
+    }
+
+    log(out.map((row) => row.join('')).join('\n'));
+  }
+}
+
+export const part1 = (input: string): number => {
+  const field = split2D(input) as Field;
+
+  return new BeamRunner(field, { x: -1, y: 0, direction: Direction.E }).run();
 };
-export const part2 = (input: string): number => {};
+
+export const part2 = (input: string): number => {
+  const field = split2D(input) as Field;
+
+  let max = 0;
+
+  const updateMax = (a: number, b: number) => {
+    const v = a > b ? a : b;
+    max = v > max ? v : max;
+  };
+
+  for (let y = 0; y < field.length; y += 1) {
+    const a = new BeamRunner(field, { x: -1, y, direction: Direction.E }).run();
+    const b = new BeamRunner(field, { x: field[0].length, y, direction: Direction.W }).run();
+
+    updateMax(a, b);
+  }
+
+  for (let x = 0; x < field[0].length; x += 1) {
+    const a = new BeamRunner(field, { x, y: -1, direction: Direction.S }).run();
+    const b = new BeamRunner(field, { x, y: field.length, direction: Direction.N }).run();
+
+    updateMax(a, b);
+  }
+
+  return max;
+};

@@ -65,12 +65,7 @@ describeDay(title, () => {
     });
 
     describe('Solution', () => {
-      // 540 too low
-      // 778 too low
-      // 868 too low
-      // 7849 wrong
-      // 7853 wrong
-      const knownSolution = null;
+      const knownSolution = 7034;
 
       test(`${knownSolution}`, () => {
         const solution = part1(input);
@@ -80,17 +75,17 @@ describeDay(title, () => {
     });
   });
 
-  xdescribe('Part 2', () => {
+  describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        [example1, 2],
+        [example1, 51],
       ])('%p => %p', (given, expected) => {
         expect(part2(given)).toEqual(expected);
       });
     });
 
-    xdescribe('Solution', () => {
-      const knownSolution = null;
+    describe('Solution', () => {
+      const knownSolution = 7759;
 
       test(`${knownSolution}`, () => {
         const solution = part2(input);
