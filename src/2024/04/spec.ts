@@ -2,30 +2,35 @@ import describeDay from '@lib/describeDay';
 import loadText from '@lib/loadText';
 import { part1, part2 } from '.';
 
-const title = 'Mull It Over';
+const title = 'Ceres Search';
 
 const input = loadText('input.txt');
 
 const example1 = `
-xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
-`;
-
-const example2 = `
-xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
 `;
 
 describeDay(title, () => {
   describe('Part 1', () => {
     describe('Tests', () => {
       test.each([
-        [example1, 161],
+        [example1, 18],
       ])('%p => %p', (given, expected) => {
         expect(part1(given)).toEqual(expected);
       });
     });
 
     describe('Solution', () => {
-      const knownSolution = 188116424;
+      const knownSolution = 2454;
 
       test(`${knownSolution}`, () => {
         const solution = part1(input);
@@ -38,14 +43,14 @@ describeDay(title, () => {
   describe('Part 2', () => {
     describe('Tests', () => {
       test.each([
-        [example2, 48],
+        [example1, 9],
       ])('%p => %p', (given, expected) => {
         expect(part2(given)).toEqual(expected);
       });
     });
 
     describe('Solution', () => {
-      const knownSolution = 104245808;
+      const knownSolution = 1858;
 
       test(`${knownSolution}`, () => {
         const solution = part2(input);
