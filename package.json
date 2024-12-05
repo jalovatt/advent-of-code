@@ -12,11 +12,11 @@
     "day": "node ./init-day.js"
   },
   "dependencies": {
-    "@babel/core": "^7.16.0",
-    "@babel/eslint-parser": "^7.16.3",
-    "@babel/preset-env": "^7.16.4",
-    "@swc/core": "^1.2.122",
-    "@swc/jest": "^0.2.15",
+    "@babel/core": "^7.26.0",
+    "@babel/eslint-parser": "^7.25.9",
+    "@babel/preset-env": "^7.26.0",
+    "@swc/core": "^1.10.0",
+    "@swc/jest": "^0.2.37",
     "@tsconfig/recommended": "^1.0.1",
     "@types/jest": "^27.0.3",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
@@ -26,7 +26,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^16.0.0",
     "eslint-plugin-import": "^2.25.3",
-    "jest": "^27.3.1",
-    "typescript": "^4.5.2"
+    "jest": "^29.7.0",
+    "typescript": "^5.7.2"
   }
 }
